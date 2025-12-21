@@ -22,6 +22,7 @@ SmartSanstha is an advanced web application that leverages cutting-edge AI and m
 - [Solution](#solution)
 - [Key Features](#key-features)
 - [AI & Machine Learning](#ai--machine-learning)
+- [Authentication & Sessions](#authentication--sessions)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
@@ -91,7 +92,7 @@ SmartSanstha addresses these challenges through an innovative, AI-powered approa
 - Learn through realistic legal scenarios
 
 #### 6. **Comprehensive Article Database** 📚
-- All 395 articles organized by 22 parts
+- All 495 articles organized by 22 parts
 - AI-simplified explanations
 - Easy navigation and search functionality
 - Cross-referencing between related articles
@@ -331,6 +332,21 @@ SmartSanstha uses **MongoDB** to store enriched constitutional data. Each articl
 - Real-time difficulty adjustment
 
 ---
+## 🔐 Authentication & Sessions
+
+SmartSanstha uses a **hybrid authentication system** that combines **Firebase Authentication** with **JWT-based session management** to ensure security, scalability, and seamless user experience.
+
+---
+
+### 🔑 Authentication Flow
+
+#### 1. Firebase Authentication (Frontend)
+- Users sign up or log in using **Firebase Email/Password Authentication**.
+- Email verification is mandatory before allowing access.
+- After successful login, the frontend retrieves a **Firebase ID Token** using:
+  ```ts
+  user.getIdToken()
+---
 
 ## 🛠️ Tech Stack
 
@@ -366,111 +382,181 @@ SmartSanstha uses **MongoDB** to store enriched constitutional data. Each articl
 ## 📁 Project Structure
 
 ```
-SmartSanstha/
-├── frontend/                      # React frontend application
-│   ├── public/                    # Static assets
-│   │   ├── models/               # 3D models for courtroom
-│   │   │   └── courtroom.glb    # Courtroom 3D model
-│   │   ├── puzzles/              # Puzzle game assets
-│   │   │   ├── preamble/        # Preamble puzzle pieces
-│   │   │   ├── map-of-india/    # India map puzzle
-│   │   │   └── national-emblem/ # Emblem puzzle
-│   │   └── city-background.jpg   # Game backgrounds
-│   ├── src/
-│   │   ├── components/           # React components
-│   │   │   ├── common/          # Reusable components
+SMARTSANSTHA
+├── backend                          
+│   ├── config
+│   │   ├── database.js
+│   │   ├── firebaseAdmin.js
+│   │   └── firebase-service-account.json
+│   │
+│   ├── controllers
+│   │   ├── adminController.js
+│   │   ├── authController.js
+│   │   ├── firebaseAuthController.js
+│   │   └── userController.js
+│   │
+│   ├── helpers
+│   │   └── partHelpers.js
+│   │
+│   ├── middleware
+│   │   ├── authMiddleware.js
+│   │   └── roleMiddleware.js
+│   │
+│   ├── models
+│   │   ├── Admin.js
+│   │   └── User.js
+│   │
+│   ├── routes
+│   │   ├── adminRoutes.js
+│   │   ├── articleRoutes.js
+│   │   ├── authRoutes.js
+│   │   ├── chatbotRoutes.js
+│   │   ├── courtRoutes.js
+│   │   ├── quizRoutes.js
+│   │   └── userRoutes.js
+│   │
+│   ├── utils
+│   │   └── categorize.js
+│   │
+│   ├── node_modules
+│   ├── .env
+│   ├── .gitignore
+│   ├── package.json
+│   ├── package-lock.json
+│   └── server.js
+│
+├── frontend                       
+│   ├── node_modules
+│   │
+│   ├── public
+│   │   ├── puzzles
+│   │   │   ├── map-of-india
+│   │   │   ├── national-emblem
+│   │   │   └── preamble
+│   │   │   ├── map-of-india-full.jpg
+│   │   │   ├── national-emblem-full.jpg
+│   │   │   └── preamble-full.jpg
+│   │   │
+│   │   ├── city-background.jpg
+│   │   ├── cracked-overlay.png
+│   │   └── vite.svg
+│   │
+│   ├── src
+│   │   ├── assets
+│   │   │   ├── bot_LOGO.png
+│   │   │   ├── bot_LOGO1.jpeg
+│   │   │   ├── chatbot_logo.png
+│   │   │   ├── chatbot_logo1.png
+│   │   │   └── chatbot_logo1 Background Removed.png
+│   │   │
+│   │   ├── components
+│   │   │   ├── chatbot
+│   │   │   │   └── ChatbotFloating.tsx
+│   │   │   ├── common
 │   │   │   │   ├── Button.tsx
 │   │   │   │   ├── Card.tsx
 │   │   │   │   ├── Modal.tsx
 │   │   │   │   └── ProgressBar.tsx
-│   │   │   ├── layout/          # Layout components
-│   │   │   │   ├── Header.tsx
-│   │   │   │   ├── Footer.tsx
-│   │   │   │   └── Layout.tsx
-│   │   │   ├── games/           # Game components
-│   │   │   │   ├── MemoryGame/
-│   │   │   │   │   ├── MemoryGame.tsx
-│   │   │   │   │   ├── MemoryCard.tsx
-│   │   │   │   │   ├── GameStats.tsx
-│   │   │   │   │   └── MatchModal.tsx
-│   │   │   │   ├── RightsDutiesGame/
-│   │   │   │   │   ├── RightsDutiesGame.tsx
-│   │   │   │   │   ├── BalanceMeter.tsx
-│   │   │   │   │   ├── TokenTray.tsx
-│   │   │   │   │   └── DropScale.tsx
-│   │   │   │   ├── JigsawPuzzle/
-│   │   │   │   │   └── JigsawPuzzle.tsx
-│   │   │   │   ├── CivicCityBuilder/
-│   │   │   │   │   └── CivicCityBuilder.tsx
-│   │   │   │   ├── GameCard.tsx
-│   │   │   │   └── ExploreGames.tsx
-│   │   │   ├── court/           # Courtroom simulation
+│   │   │   ├── court
+│   │   │   │   ├── CourtIllustration.tsx
 │   │   │   │   ├── CourtScene.tsx
-│   │   │   │   └── CourtSceneVanilla.tsx
-│   │   │   ├── learn/           # Learning section
-│   │   │   │   └── LearnPage.tsx
-│   │   │   ├── chatbot/         # AI chatbot UI
-│   │   │   │   └── ChatbotFloating.tsx
-│   │   │   └── dashboard/       # User dashboard
-│   │   │       └── Dashboard.tsx
-│   │   ├── pages/               # Page components
-│   │   │   ├── HomePage.tsx
-│   │   │   ├── GamesPage.tsx
-│   │   │   ├── CourtSimulationPage.tsx
-│   │   │   ├── ArticlePage.tsx
-│   │   │   ├── PartArticlesPage.tsx
-│   │   │   ├── AboutPage.tsx
-│   │   │   └── ContactPage.tsx
-│   │   ├── data/                # Static data
-│   │   │   ├── articlesData.ts  # 395 AI-simplified articles
-│   │   │   ├── partsData.ts     # 22 constitutional parts
-│   │   │   └── gamesData.ts     # Game configurations
-│   │   ├── types/               # TypeScript definitions
-│   │   │   └── index.ts
-│   │   ├── utils/               # Utility functions
-│   │   │   └── helpers.ts
-│   │   ├── hooks/               # Custom React hooks
+│   │   │   │   ├── CourtSceneVanilla.tsx
+│   │   │   │   └── CourtSimulation.css
+│   │   │   ├── dashboard
+│   │   │   │   ├── AchievementBadges.tsx
+│   │   │   │   ├── Dashboard.tsx
+│   │   │   │   ├── ScoreCard.tsx
+│   │   │   │   └── UserProgress.tsx
+│   │   │   ├── games
+│   │   │   │   ├── CivicCityBuilder
+│   │   │   │   ├── JigsawPuzzle
+│   │   │   │   ├── MemoryGame
+│   │   │   │   ├── RightsDutiesGame
+│   │   │   │   ├── ExploreGames.tsx
+│   │   │   │   └── GameCard.tsx
+│   │   │   ├── home
+│   │   │   │   ├── AboutSection.tsx
+│   │   │   │   ├── ConstitutionFacts.tsx
+│   │   │   │   ├── CTASection.tsx
+│   │   │   │   ├── FAQSection.tsx
+│   │   │   │   ├── FeaturesSection.tsx
+│   │   │   │   ├── HeroSection.tsx
+│   │   │   │   ├── WhatIsSmartSanstha.tsx
+│   │   │   │   └── WhyLearnSection.tsx
+│   │   │   ├── layout
+│   │   │   │   ├── Footer.tsx
+│   │   │   │   ├── Layout.tsx
+│   │   │   │   ├── Navbar.tsx
+│   │   │   │   └── SiteLayout.tsx
+│   │   │   └── learn
+│   │   │       ├── ArticleCard.tsx
+│   │   │       ├── ConstitutionParts.tsx
+│   │   │       └── LearnPage.tsx
+│   │   │
+│   │   ├── data
+│   │   │   ├── articlesData.ts
+│   │   │   ├── faqData.ts
+│   │   │   └── gamesData.ts
+│   │   │
+│   │   ├── hooks
+│   │   │   ├── useGameState.ts
+│   │   │   ├── useLocalStorage.ts
 │   │   │   └── useMediaQuery.ts
-│   │   ├── App.tsx              # Main app component
-│   │   ├── main.tsx            # Entry point
-│   │   └── index.css           # Global styles
+│   │   │
+│   │   ├── pages
+│   │   │   ├── AboutPage.tsx
+│   │   │   ├── ArticlePage.tsx
+│   │   │   ├── AuthPage.tsx
+│   │   │   ├── ContactPage.tsx
+│   │   │   ├── CourtSimulationPage.tsx
+│   │   │   ├── GamesPage.tsx
+│   │   │   ├── HomePage.tsx
+│   │   │   └── PartArticlesPage.tsx
+│   │   │
+│   │   ├── services
+│   │   │   └── api.ts
+│   │   │
+│   │   ├── styles
+│   │   │   └── globals.css
+│   │   │
+│   │   ├── types
+│   │   │   └── index.ts
+│   │   │
+│   │   ├── utils
+│   │   │   ├── constants.ts
+│   │   │   └── helpers.ts
+│   │   │
+│   │   ├── App.css
+│   │   ├── App.tsx
+│   │   ├── firebase.ts
+│   │   ├── index.css
+│   │   ├── index.tsx
+│   │   ├── main.tsx
+│   │   ├── routes.tsx
+│   │   ├── types.ts
+│   │   └── vite-env.d.ts
+│   │
+│   ├── .env
+│   ├── .gitignore
+│   ├── eslint.config.js
+│   ├── index.html
 │   ├── package.json
+│   ├── package-lock.json
+│   ├── tailwind.config.js
 │   ├── tsconfig.json
-│   ├── vite.config.ts
-│   └── tailwind.config.js
+│   ├── tsconfig.app.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
 │
-├── backend/                       # Express backend
-│   ├── models/                   # MongoDB schemas
-│   │   ├── CourtScenario.js     # Court case scenarios
-│   │   └── Article.js           # Simplified articles
-│   ├── routes/                   # API routes
-│   │   ├── chatbot.js           # Gemini chatbot endpoints
-│   │   ├── court.js             # Court simulation API
-│   │   └── quiz.js              # Adaptive quiz API
-│   ├── services/                 # Business logic
-│   │   ├── geminiService.js     # Gemini AI integration
-│   │   └── quizGenerator.js     # Adaptive quiz logic
-│   ├── config/                   # Configuration
-│   │   └── db.js                # MongoDB connection
-│   ├── middleware/               # Express middleware
-│   │   └── errorHandler.js
-│   ├── server.js                # Main server file
-│   ├── package.json
-│   └── .env                     # Environment variables
-│
-├── ml/                           # Machine Learning (optional)
-│   ├── bart_simplification/     # Text simplification
-│   │   └── simplify_articles.py
-│   └── requirements.txt         # Python dependencies
-│
+├── Constitution_db.Articles.json   # AI-simplified constitution dataset
 ├── .gitignore
+├── package.json                    # Root scripts
 ├── README.md
 └── LICENSE
 ```
-
 ---
-
 ## 🚀 Getting Started
+
 
 ### Prerequisites
 - **Node.js** (v16 or higher)
@@ -478,50 +564,94 @@ SmartSanstha/
 - **npm** or **yarn**
 - **Git**
 - **Google Gemini API Key** (for AI features)
+- **Firebase project** (for authentication)
+
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/harshgajera91/SmartSanstha.git
+   git clone https://github.com/sekhargauda/SmartSanstha.git
    cd SmartSanstha
    ```
 
-2. **Install Backend Dependencies**
+2. **Install dependencies (frontend + backend)**
+
    ```bash
-   cd backend
-   npm install
+   npm run install-all
    ```
 
 3. **Configure Backend Environment**
    
    Create a `.env` file in the `backend` directory:
-   ```env
+
+   ```bash
    PORT=5001
-   MONGODB_URI=your_mongodb_connection_string
-   GEMINI_API_KEY=your_google_gemini_api_key
    NODE_ENV=development
+
+   # Database
+   MONGODB_URI=your_mongodb_connection_string
+
+   # Gemini / AI
+   GEMINI_API_KEY=your_google_gemini_api_key
+
+   # Firebase Admin
+   FIREBASE_PROJECT_ID=your_project_id
+   FIREBASE_CLIENT_EMAIL=your_firebase_admin_client_email
+   FIREBASE_PRIVATE_KEY="your_firebase_admin_private_key"
+
+   # JWT Configuration
+   JWT_ACCESS_SECRET=your_access_token_secret
+   JWT_REFRESH_SECRET=your_refresh_token_secret
+   ACCESS_TOKEN_EXPIRES=15m
+   REFRESH_TOKEN_EXPIRES=7d
    ```
 
-4. **Start Backend Server**
-   ```bash
-   npm start
-   ```
-   Backend will run on `http://localhost:5001`
-
-5. **Install Frontend Dependencies**
    
-   Open a new terminal:
+   ### 🔧 Firebase service account setup
+
+    To use Firebase Admin on the backend, you must add a service account JSON file:
+
+    1. Go to the **Firebase Console** → **Project settings** → **Service accounts**.  
+    2. Click **“Generate new private key”** under **Firebase Admin SDK** and confirm.  
+    3. A JSON file will be downloaded (for example:  
+      `<project-id>-firebase-adminsdk-xxxxxx.json`).  
+    4. Rename this file to **`firebase-service-account.json`**.  
+    5. Place it in the `backend/config` folder so the path becomes:
+
+
+        ```bash
+        backend/config/firebase-service-account.json
+        ```
+
+    5. Make sure this file is **not committed** to Git (it should stay ignored in `.gitignore`). 
+
+
+
+4. **Configure Frontend Environment**
+
+   Create a `.env` file in the `frontend` directory:
+
    ```bash
-   cd frontend
-   npm install
+   VITE_AUTH_API_BASE_URL=http://localhost:5001
+
+   #Firebase client config
+   VITE_FIREBASE_API_KEY=your_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
    ```
 
-6. **Start Frontend Development Server**
+
+
+5. **Start the app (backend + frontend)**
+
    ```bash
    npm run dev
    ```
-   Frontend will run on `http://localhost:5173`
+   This runs both concurrently:
+   - Backend on `http://localhost:5001`
+   - Frontend on `http://localhost:5173`
+
 
 7. **Access the Application**
    
@@ -540,27 +670,9 @@ cd backend
 NODE_ENV=production npm start
 ```
 
-### Environment Variables
-
-**Backend (.env)**
-```env
-# Server Configuration
-PORT=5001
-NODE_ENV=development
-
-# Database
-MONGODB_URI=mongodb://localhost:27017/smartsanstha
-# OR for MongoDB Atlas:
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/smartsanstha
-
-# AI/ML Configuration
-GEMINI_API_KEY=your_gemini_api_key_here
-
-# CORS
-ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5000
-```
-
 ---
+
+
 <!-- 
 ## 🔌 API Endpoints
 
@@ -903,9 +1015,11 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ### AI & Technology
 - **Meta AI**: Facebook BART large-cnn model for text simplification
 - **Google**: Gemini Flash 2.5 for chatbot and adaptive learning
+- **Firebase Authentication**: Secure email/password login and ID tokens
 - **Three.js Community**: For 3D graphics capabilities
 - **React & TypeScript**: For robust frontend development
 - **MongoDB**: For reliable data storage
+
 
 ### Open Source Community
 - All contributors and supporters
@@ -914,14 +1028,24 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
+## ✍️ Author
+
+### **Sekhar Gauda**
+- [GitHub](https://github.com/sekhargauda)
+- [LinkedIn](https://www.linkedin.com/in/sekhargauda)
+- [Portfolio](https://sekhar-portfolio-t6hy.onrender.com/)
+
+---
+
 ## 📞 Support
 
 Need help or have questions?
 
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/harshgajera101/SmartSanstha/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/harshgajera101/SmartSanstha/discussions)
-- 📧 **Email**: harshgajera017@gmail.com
-- 📖 **Documentation**: [Wiki](https://github.com/harshgajera101/SmartSanstha/wiki)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/sekhargauda/SmartSanstha/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/sekhargauda/SmartSanstha/discussions)
+- 📧 **Email**: gaudasekhar8@gmail.com
+
+
 
 ---
 
@@ -940,11 +1064,11 @@ If SmartSanstha helps you learn about the Constitution:
 
 ## 📊 Project Stats
 
-![GitHub stars](https://img.shields.io/github/stars/harshgajera101/SmartSanstha?style=social)
-![GitHub forks](https://img.shields.io/github/forks/harshgajera101/SmartSanstha?style=social)
-![GitHub issues](https://img.shields.io/github/issues/harshgajera101/SmartSanstha)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/harshgajera101/SmartSanstha)
-![License](https://img.shields.io/github/license/harshgajera101/SmartSanstha)
+![GitHub stars](https://img.shields.io/github/stars/sekhargauda/SmartSanstha?style=social)
+![GitHub forks](https://img.shields.io/github/forks/sekhargauda/SmartSanstha?style=social)
+![GitHub issues](https://img.shields.io/github/issues/sekhargauda/SmartSanstha)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/sekhargauda/SmartSanstha)
+![License](https://img.shields.io/github/license/sekhargauda/SmartSanstha)
 
 ---
 
