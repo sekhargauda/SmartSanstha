@@ -21,18 +21,19 @@ SmartSanstha is an advanced web application that leverages cutting-edge AI and m
 - [Problem Statement](#problem-statement)
 - [Solution](#solution)
 - [Key Features](#key-features)
-- [AI & Machine Learning](#ai--machine-learning)
+- [AI & Machine Learning](#ai-machine-learning)
 - [Authentication & Sessions](#authentication--sessions)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
-- [API Endpoints](#api-endpoints)
 - [Contributing](#contributing)
 - [License](#license)
 
+
 ---
 
-## 🎯 Problem Statement
+## 🎯 Problem Statement <a id="problem-statement"></a>
+
 
 The Indian Constitution is one of the longest and most comprehensive constitutions in the world, with **465 articles** organized into **25 parts** and **12 schedules**. However, learning and understanding it presents several challenges:
 
@@ -53,7 +54,7 @@ The Indian Constitution is one of the longest and most comprehensive constitutio
 
 ---
 
-## 💡 Solution
+## 💡 Solution <a id="solution"></a>
 
 SmartSanstha addresses these challenges through an innovative, AI-powered approach that combines advanced machine learning with interactive education:
 
@@ -106,7 +107,7 @@ SmartSanstha addresses these challenges through an innovative, AI-powered approa
 
 ---
 
-## ✨ Key Features
+## ✨ Key Features <a id="key-features"></a>
 
 ### 🤖 AI-Powered Learning
 - **Smart Text Simplification**: BART model converts complex legal text to simple language
@@ -139,7 +140,7 @@ SmartSanstha addresses these challenges through an innovative, AI-powered approa
 
 ---
 
-## 🧠 AI & Machine Learning
+## 🧠 AI & Machine Learning <a id="ai-machine-learning"></a>
 
 SmartSanstha integrates state-of-the-art AI and machine learning models to deliver a superior learning experience:
 
@@ -332,7 +333,7 @@ SmartSanstha uses **MongoDB** to store enriched constitutional data. Each articl
 - Real-time difficulty adjustment
 
 ---
-## 🔐 Authentication & Sessions
+## 🔐 Authentication & Sessions <a id="authentication--sessions"></a>
 
 SmartSanstha uses a **hybrid authentication system** that combines **Firebase Authentication** with **JWT-based session management** to ensure security, scalability, and seamless user experience.
 
@@ -348,7 +349,7 @@ SmartSanstha uses a **hybrid authentication system** that combines **Firebase Au
   user.getIdToken()
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack <a id="tech-stack"></a>
 
 ### Frontend
 - **React 18** - UI library with hooks
@@ -379,7 +380,7 @@ SmartSanstha uses a **hybrid authentication system** that combines **Firebase Au
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Structure <a id="project-structure"></a>
 
 ```
 SMARTSANSTHA
@@ -555,7 +556,7 @@ SMARTSANSTHA
 └── LICENSE
 ```
 ---
-## 🚀 Getting Started
+## 🚀 Getting Started <a id="getting-started"></a>
 
 
 ### Prerequisites
@@ -940,7 +941,7 @@ Get specific article with AI-simplified explanation.
 
 We welcome contributions from developers, educators, legal experts, and AI enthusiasts!
 
-### Ways to Contribute
+### Ways to Contribute <a id="contributing"></a>
 
 1. **Code Contributions**
    - Add new games or features
@@ -999,7 +1000,7 @@ We welcome contributions from developers, educators, legal experts, and AI enthu
 
 ---
 
-## 📄 License
+## 📄 License<a id="license"></a>
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
