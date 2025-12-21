@@ -893,14 +893,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
-## 👨‍💻 Author
-
-**Harsh Gajera**
-- GitHub: [@harshgajera91](https://github.com/harshgajera101)
-- LinkedIn: [Harsh Gajera](https://linkedin.com/in/gajera-harsh)
-- Project: [SmartSanstha](https://github.com/harshgajera91/SmartSanstha)
-
----
 
 ## 🙏 Acknowledgments
 
@@ -965,3 +957,4 @@ If SmartSanstha helps you learn about the Constitution:
 **#DigitalIndia #ConstitutionalLiteracy #AIforGood #OpenSource**
 
 </div>
+
