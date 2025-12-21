@@ -1,3 +1,5 @@
+// backend/config/database.js
+
 import mongoose from 'mongoose';
 
 // Declaring collections globally for access via getter functions
