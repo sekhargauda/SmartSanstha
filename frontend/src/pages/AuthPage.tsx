@@ -168,6 +168,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
       });
 
       onLoginSuccess({

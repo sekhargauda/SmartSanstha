@@ -1,3 +1,5 @@
+// frontend/src/components/home/HeroSection.tsx
+
 import React from 'react';
 import { Sparkles, ArrowRight, PlayCircle } from 'lucide-react';
 import { Button } from '../common/Button';

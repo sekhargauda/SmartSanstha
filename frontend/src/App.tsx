@@ -1,3 +1,5 @@
+// frontend/src/App.tsx
+
 import React, { useState, useEffect } from 'react';
 import { Layout } from './components/layout/Layout';
 import { HomePage } from './pages/HomePage';
@@ -20,7 +22,7 @@ export interface UserData {
   id: string;
   name: string;
   email: string;
-  category:  string;
+  category: string;
 }
 
 function App() {
@@ -29,19 +31,22 @@ function App() {
   const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_URL = import.meta. env.VITE_AUTH_API_BASE_URL;
+  // App.tsx
+  const API_URL = import.meta.env.VITE_AUTH_API_BASE_URL || 'http://localhost:5001';
+
 
   // Check user session on app load
   useEffect(() => {
     const checkUserSession = async () => {
       try {
-        // Try to get user profile
+        // Try to get user me
         const response = await fetch(`${API_URL}/api/user/me`, {
           credentials: 'include',
         });
-        
+
+
         if (response.ok) {
-          const data = await response. json();
+          const data = await response.json();
           setUser(data.profile);
         } else if (response.status === 401) {
           // Access token expired, try to refresh
@@ -49,13 +54,14 @@ function App() {
             method: 'POST',
             credentials: 'include',
           });
-          
+
           if (refreshResponse.ok) {
-            // Retry getting user profile with new access token
+            // Retry getting user me with new access token
             const retryResponse = await fetch(`${API_URL}/api/user/me`, {
               credentials: 'include',
             });
-            
+
+
             if (retryResponse.ok) {
               const data = await retryResponse.json();
               setUser(data.profile);
@@ -99,8 +105,8 @@ function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'home':
-        return <HomePage onNavigate={handleNavigation} />;
-      case 'about': 
+        return <HomePage onNavigate={handleNavigation} user={user} />;
+      case 'about':
         return <AboutPage />;
       case 'learn':
         return <LearnPage onNavigate={handleNavigation} user={user} />;
@@ -108,7 +114,7 @@ function App() {
         return <PartArticlesPage onNavigate={handleNavigation} partData={pageData} />;
       case 'article':
         return <ArticlePage onNavigate={handleNavigation} articleData={pageData} />;
-      case 'games': 
+      case 'games':
         return <GamesPage onNavigate={handleNavigation} />;
       case 'memory-game':
         return <MemoryGame onNavigate={handleNavigation} />;
@@ -118,8 +124,8 @@ function App() {
         return <CivicCityBuilder onNavigate={handleNavigation} />;
       case 'jigsaw-puzzle':
         return <JigsawPuzzle onNavigate={handleNavigation} />;
-      case 'dashboard': 
-        return user ?  <Dashboard user={user} /> : <HomePage onNavigate={handleNavigation} />;
+      case 'dashboard':
+        return user ? <Dashboard user={user} /> : <HomePage onNavigate={handleNavigation} user={user} />;
       case 'contact':
         return <ContactPage />;
       case 'auth':
@@ -127,7 +133,7 @@ function App() {
       case 'court-simulation':
         return <CourtSimulationPage onNavigate={handleNavigation} />;
       default:
-        return <HomePage onNavigate={handleNavigation} />;
+        return <HomePage onNavigate={handleNavigation} user={user} />;
     }
   };
 

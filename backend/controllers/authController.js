@@ -139,7 +139,9 @@ export const logout = (req, res) => {
 // refresh token endpoint
 export const refreshToken = async (req, res) => {
   try {
-    const token = req.cookies?.refreshToken || req.body.refreshToken;
+    // console.log('Cookies on refresh:', req.cookies);
+
+    const token = req.cookies?.refreshToken || req.body?.refreshToken;
     if (!token) return res.status(401).json({ message: 'No refresh token' });
 
     const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
@@ -197,8 +199,8 @@ export const getProfile = async (req, res) => {
     // Return user profile with proper structure
     return res.json({ 
       profile: {
-        id: req.user._id. toString(),
-        name: req. user.name,
+        id: req.user._id.toString(),
+        name: req.user.name,
         email: req.user.email,
         category: req.user.category
       }
