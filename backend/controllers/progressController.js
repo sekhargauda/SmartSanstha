@@ -11,7 +11,7 @@ async function getOrCreateStats(userId) {
 const cleanArticleNumber = (raw) => {
   const str = String(raw).trim();
   if (str.toLowerCase().includes("preamble")) return "0";
-  const match = str.match(/(\d+)/);
+  const match = str.match(/(\d+[A-Za-z]*)/);
   return match ? match[1] : str;
 };
 
