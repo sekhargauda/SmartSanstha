@@ -14,6 +14,7 @@ import courtRoutes from './routes/courtRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import progressRoutes from "./routes/progressRoutes.js";
 
 // --- Path resolution for ES Modules ---
 const __filename = fileURLToPath(import.meta.url);
@@ -128,6 +129,7 @@ app.use('/api/court', courtRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use("/api/progress", progressRoutes);
 
 // 404 handler
 app.use((req, res) => {

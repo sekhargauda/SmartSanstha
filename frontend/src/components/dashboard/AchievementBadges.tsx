@@ -1,3 +1,5 @@
+// frontend/src/components/dashboard/AchievementBadges.tsx
+
 import React from 'react';
 import { Award, Star, Zap, Target, Trophy, Medal } from 'lucide-react';
 import { Card } from '../common/Card';

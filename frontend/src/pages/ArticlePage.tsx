@@ -1,3 +1,5 @@
+// frontend/src/pages/ArticlePage.tsx
+
 import React, { useState, useEffect } from "react";
 import {
   BookOpen,
@@ -24,7 +26,8 @@ import {
 import { Card } from "../components/common/Card";
 import { Button } from "../components/common/Button";
 import { ProgressBar } from "../components/common/ProgressBar";
-import { articleAPI, quizAPI } from "../services/api";
+import { articleAPI, quizAPI, progressAPI } from "../services/api";
+import { normalizeArticleId } from "../utils/articleNumber";
 
 interface ArticlePageProps {
   onNavigate: (page: string, data?: any) => void;
@@ -107,6 +110,58 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({
     }
   };
 
+  // --- NEW: mark article as read when loaded ---
+
+  useEffect(() => {
+    if (!article) return;
+
+    const raw =
+      article.articleNumber != null
+        ? String(article.articleNumber)
+        : articleData?.articleNumber;
+    if (!raw) return;
+
+    const num = normalizeArticleId(raw);
+    const partName = article.part?.name || articleData?.partName;
+
+    progressAPI
+      .markArticleRead(num, partName)
+      .catch((e: any) => console.error("markArticleRead failed:", e));
+  }, [article, articleData]);
+
+  // --- NEW: load bookmark state when article loads ---
+useEffect(() => {
+  const loadBookmarkState = async () => {
+    if (!article) return;
+
+    const raw =
+      article.articleNumber != null
+        ? String(article.articleNumber)
+        : articleData?.articleNumber;
+    if (!raw) return;
+
+    const num = normalizeArticleId(raw);
+
+    try {
+      const res: any = await progressAPI.getDashboard();
+      if (!res?.success) return;
+
+      const { bookmarks } = res;
+
+      const isBookmarkedNow = (bookmarks || []).some(
+        (b: any) => String(b.articleNumber) === num
+      );
+
+      setIsBookmarked(isBookmarkedNow);
+    } catch (e) {
+      console.error("Failed to load bookmark state:", e);
+    }
+  };
+
+  loadBookmarkState();
+}, [article, articleData]);
+  
+
   const handlePreviousArticle = () => {
     if (currentIndex > 0) {
       const prevArticle = allArticles[currentIndex - 1];
@@ -114,10 +169,10 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({
       if (prevArticle.article === "Preamble") {
         articleNumber = "0";
       } else {
-        const match = prevArticle.article?.match(/Article\s+(\d+)/);
+        const match = prevArticle.article?.match(/Article\s+(\d+[A-Za-z]*)/);
         if (match) articleNumber = match[1];
         else if (prevArticle.id) {
-          const idMatch = prevArticle.id.match(/article-(\d+)/);
+          const idMatch = prevArticle.id.match(/article-(\d+[A-Za-z]*)/);
           if (idMatch) articleNumber = idMatch[1];
         }
       }
@@ -140,10 +195,10 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({
       if (nextArticle.article === "Preamble") {
         articleNumber = "0";
       } else {
-        const match = nextArticle.article?.match(/Article\s+(\d+)/);
+        const match = nextArticle.article?.match(/Article\s+(\d+[A-Za-z]*)/);
         if (match) articleNumber = match[1];
         else if (nextArticle.id) {
-          const idMatch = nextArticle.id.match(/article-(\d+)/);
+          const idMatch = nextArticle.id.match(/article-(\d+[A-Za-z]*)/);
           if (idMatch) articleNumber = idMatch[1];
         }
       }
@@ -294,6 +349,30 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({
     return colors[category] || "from-orange-500 to-red-500";
   };
 
+  // --- NEW: bookmark handler using backend ---
+  const handleToggleBookmark = async () => {
+    if (!article) return;
+
+    const raw =
+      article.articleNumber != null
+        ? String(article.articleNumber)
+        : articleData?.articleNumber;
+    if (!raw) return;
+
+    const num = normalizeArticleId(raw);
+    const partName = article.part?.name || articleData?.partName;
+
+    try {
+      const res: any = await progressAPI.toggleBookmark(num, partName);
+      if (res?.success) setIsBookmarked(res.bookmarked);
+    } catch (e) {
+      console.error("toggleBookmark failed", e);
+      alert("Failed to update bookmark");
+    }
+  };
+
+  // -------------------------------------------------
+
   const extractArticleNumberFromRelated = (
     relatedNumber: string
   ): string | null => {
@@ -417,12 +496,11 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({
             {/* Action Buttons */}
             <div className="flex md:flex-col gap-2">
               <button
-                onClick={() => setIsBookmarked(!isBookmarked)}
-                className={`p-3 rounded-xl transition-all ${
-                  isBookmarked
-                    ? "bg-orange-500 text-white"
-                    : "bg-slate-700 text-slate-400 hover:bg-slate-600"
-                }`}
+                onClick={handleToggleBookmark}
+                className={`p-3 rounded-xl transition-all ${isBookmarked
+                  ? "bg-orange-500 text-white"
+                  : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                  }`}
                 title={isBookmarked ? "Remove bookmark" : "Bookmark article"}
               >
                 <Bookmark
@@ -444,22 +522,20 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setActiveTab("simplified")}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all ${
-            activeTab === "simplified"
-              ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg"
-              : "bg-slate-800 text-slate-400 hover:bg-slate-700"
-          }`}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all ${activeTab === "simplified"
+            ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg"
+            : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+            }`}
         >
           <Lightbulb className="w-5 h-5" />
           Simplified Explanation
         </button>
         <button
           onClick={() => setActiveTab("original")}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all ${
-            activeTab === "original"
-              ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg"
-              : "bg-slate-800 text-slate-400 hover:bg-slate-700"
-          }`}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all ${activeTab === "original"
+            ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg"
+            : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+            }`}
         >
           <FileText className="w-5 h-5" />
           Original Text
@@ -631,11 +707,10 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({
             <button
               onClick={handlePreviousArticle}
               disabled={!hasPrevious}
-              className={`flex items-center gap-3 px-8 py-4 rounded-xl font-semibold transition-all border-2 ${
-                hasPrevious
-                  ? "border-orange-500 text-orange-400 hover:bg-orange-500/10"
-                  : "border-slate-700 text-slate-600 cursor-not-allowed"
-              }`}
+              className={`flex items-center gap-3 px-8 py-4 rounded-xl font-semibold transition-all border-2 ${hasPrevious
+                ? "border-orange-500 text-orange-400 hover:bg-orange-500/10"
+                : "border-slate-700 text-slate-600 cursor-not-allowed"
+                }`}
             >
               <ChevronLeft className="w-5 h-5" />
               <span>Previous</span>
@@ -655,11 +730,10 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({
             <button
               onClick={handleNextArticle}
               disabled={!hasNext}
-              className={`flex items-center gap-3 px-8 py-4 rounded-xl font-semibold transition-all ${
-                hasNext
-                  ? "bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-lg"
-                  : "bg-slate-700 text-slate-600 cursor-not-allowed"
-              }`}
+              className={`flex items-center gap-3 px-8 py-4 rounded-xl font-semibold transition-all ${hasNext
+                ? "bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-lg"
+                : "bg-slate-700 text-slate-600 cursor-not-allowed"
+                }`}
             >
               <span>Next</span>
               <ChevronRight className="w-5 h-5" />

@@ -1,3 +1,5 @@
+// frontend/src/pages/GamesPage.tsx
+
 import React, { useState } from 'react';
 import { 
   Gamepad2, 

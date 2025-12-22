@@ -1,3 +1,5 @@
+// frontend/src/components/dashboard/UserProgress.tsx
+
 import React from 'react';
 import { BookOpen, Trophy, Target, Zap } from 'lucide-react';
 import { Card } from '../common/Card';
@@ -5,7 +7,7 @@ import { Card } from '../common/Card';
 export const UserProgress: React.FC = () => {
   const goals = [
     { id: 1, icon: BookOpen, title: 'Read 50 Articles', current: 23, target: 50, color: 'from-blue-500 to-cyan-500' },
-    { id: 2, icon: Trophy, title: 'Complete 20 Games', current: 15, target: 20, color: 'from-purple-500 to-pink-500' },
+    { id: 2, icon: Trophy, title: 'Complete 20 Quiz', current: 15, target: 20, color: 'from-purple-500 to-pink-500' },
     { id: 3, icon: Target, title: 'Score 3000 Points', current: 2450, target: 3000, color: 'from-orange-500 to-red-500' },
     { id: 4, icon: Zap, title: 'Maintain 30-Day Streak', current: 7, target: 30, color: 'from-green-500 to-emerald-500' },
   ];

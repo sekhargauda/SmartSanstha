@@ -1,3 +1,5 @@
+// frontend/src/components/learn/ConstitutionParts.tsx
+
 import React from 'react';
 import { Card } from '../common/Card';
 import { BookOpen, FileText, TrendingUp } from 'lucide-react';

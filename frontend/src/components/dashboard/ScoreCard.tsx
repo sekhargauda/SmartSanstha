@@ -1,3 +1,5 @@
+// frontend/src/components/dashboard/ScoreCard.tsx
+
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 import { Card } from '../common/Card';

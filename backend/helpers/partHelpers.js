@@ -1,3 +1,5 @@
+// backend/helpers/partHelpers.js
+
 /**
  * Extract part number from part name
  * @param {string} partName - e.g., "Preamble", "Part III"

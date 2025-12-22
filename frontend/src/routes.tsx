@@ -1,14 +1,14 @@
 import { RouteObject, Navigate } from 'react-router-dom'
 import SiteLayout from '@/components/layout/SiteLayout'
 // import DashboardLayout from '@/layouts/DashboardLayout'
-import Home from '@/pages/Home'
+// import {HomePage} from '@/pages/HomePage'
 
 const routes: RouteObject[] = [
   {
     path: '/',
     element: <SiteLayout />,
     children: [
-      { index: true, element: <Home /> },
+      // { index: true, element: <HomePage /> },
       // { path: 'learn', element: <Learn /> },
       // { path: 'games', element: <Games /> },
       // { path: 'blog', element: <Blog /> },

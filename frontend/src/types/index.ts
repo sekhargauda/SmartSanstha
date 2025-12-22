@@ -1,3 +1,5 @@
+// frontend/src/types/index.ts
+
 export interface ArticleCard {
   uid: string;
   article: string;

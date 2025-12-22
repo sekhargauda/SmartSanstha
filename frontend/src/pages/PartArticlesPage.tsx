@@ -1,3 +1,5 @@
+// frontend/src/pages/PartArticlesPage.tsx
+
 import React, { useState, useEffect } from "react";
 import {
   ArrowLeft,
@@ -18,13 +20,14 @@ import { Card } from "../components/common/Card";
 import { ArticleCard } from "../components/learn/ArticleCard";
 import { Button } from "../components/common/Button";
 import { ProgressBar } from "../components/common/ProgressBar";
-import { articleAPI, quizAPI } from "../services/api";
+import { articleAPI, quizAPI, progressAPI } from "../services/api";
 
 interface PartArticlesPageProps {
   onNavigate: (page: string, data?: any) => void;
   partData?: {
     partName: string;
     partTitle: string;
+    targetArticleNumber?: string; 
   };
 }
 
@@ -37,21 +40,25 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // --- NEW ADAPTIVE QUIZ STATE ---
+  // --- NEW: completed articles in this part ---
+  const [completedArticles, setCompletedArticles] = useState<string[]>([]);
+  // -------------------------------------------
+
+  // --- ADAPTIVE QUIZ STATE ---
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizLoading, setQuizLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
   const [quizId, setQuizId] = useState<string | null>(null);
-  const [currentQuizQuestion, setCurrentQuizQuestion] = useState<any>(null); // Single question
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null); // Single answer
-  const [lastResult, setLastResult] = useState<any>(null); // For immediate feedback
-  const [quizHistory, setQuizHistory] = useState<any[]>([]); // To show results
+  const [currentQuizQuestion, setCurrentQuizQuestion] = useState<any>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [lastResult, setLastResult] = useState<any>(null);
+  const [quizHistory, setQuizHistory] = useState<any[]>([]);
   const [finalScore, setFinalScore] = useState(0);
   const [questionNumber, setQuestionNumber] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Loader for submit
-  // --- END NEW QUIZ STATE ---
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // --- END QUIZ STATE ---
 
   useEffect(() => {
     if (partData?.partName) {
@@ -83,17 +90,28 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
     }
   };
 
+  // const fetchPartProgress = async (partName: string) => {
+  //   try {
+  //     const res: any = await progressAPI.getPartProgress(partName);
+  //     if (res?.success) {
+  //       setCompletedArticles(res.completedArticleNumbers || []);
+  //     }
+  //   } catch (err) {
+  //     console.error("❌ Error fetching part progress:", err);
+  //   }
+  // };
+
   const handleArticleClick = (article: any, index: number) => {
     let articleNumber = "";
 
     if (article.article === "Preamble") {
       articleNumber = "0";
     } else {
-      const match = article.article?.match(/Article\s+(\d+)/);
+      const match = article.article?.match(/Article\s+(\d+[A-Za-z]*)/);
       if (match) {
         articleNumber = match[1];
       } else if (article.id) {
-        const idMatch = article.id.match(/article-(\d+)/);
+        const idMatch = article.id.match(/Article\s+(\d+[A-Za-z]*)/);
         if (idMatch) {
           articleNumber = idMatch[1];
         }
@@ -113,7 +131,7 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
     }
   };
 
-  // --- UPDATED QUIZ HANDLERS ---
+  // --- QUIZ HANDLERS ---
 
   const handleStartQuiz = async () => {
     try {
@@ -133,7 +151,7 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
         setShowResults(false);
         setSelectedAnswer(null);
         setLastResult(null);
-        setQuizHistory([]); // Clear history
+        setQuizHistory([]);
         setFinalScore(0);
 
         console.log("✅ Quiz started with ID:", response.quizId);
@@ -169,7 +187,6 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
       );
 
       if (response?.success) {
-        // Store history for the results page
         setQuizHistory((prev) => [
           ...prev,
           {
@@ -178,7 +195,7 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
             result: response.result,
           },
         ]);
-        setLastResult(response.result); // For immediate feedback (if needed)
+        setLastResult(response.result);
 
         if (response.quizOver) {
           console.log("✅ Quiz finished. Final Score:", response.finalScore);
@@ -186,11 +203,10 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
           setShowResults(true);
           setCurrentQuizQuestion(null);
         } else {
-          // Load next question
           setCurrentQuizQuestion(response.question);
           setQuestionNumber(response.questionNumber);
           setTotalQuestions(response.totalQuestions);
-          setSelectedAnswer(null); // Reset selection
+          setSelectedAnswer(null);
         }
       } else {
         alert("Failed to submit answer.");
@@ -201,11 +217,6 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // This function now just returns the score provided by the server
-  const calculateScore = () => {
-    return finalScore;
   };
 
   const resetQuiz = () => {
@@ -220,7 +231,7 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
     setQuestionNumber(0);
   };
 
-  // --- END UPDATED QUIZ HANDLERS ---
+  // --- END QUIZ HANDLERS ---
 
   const filteredArticles = articles.filter(
     (article) =>
@@ -228,6 +239,37 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
       article.article?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       article.summary?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // --- NEW: completed / remaining counts for this part ---
+  const completedCount = articles.filter((article) => {
+    let num: string | null = null;
+    if (article.article === "Preamble") num = "0";
+    else {
+      const match = article.article?.match(/Article\s+(\d+[A-Za-z]*)/i);
+      if (match) num = match[1];
+    }
+    return num && completedArticles.includes(num);
+  }).length;
+
+  const remainingCount = Math.max(articles.length - completedCount, 0);
+  // ------------------------------------------------------
+
+  useEffect(() => {
+    if (!partData?.targetArticleNumber) return;
+    if (articles.length === 0) return;
+
+    const targetNum = partData.targetArticleNumber;
+
+    const idx = articles.findIndex((article) => {
+      if (article.article === "Preamble") return targetNum === "0";
+      const match = article.article?.match(/Article\s+(\d+[A-Za-z]*)/i);
+      return match && match[1] === targetNum;
+    });
+
+    if (idx >= 0) {
+      handleArticleClick(articles[idx], idx);
+    }
+  }, [partData?.targetArticleNumber, articles]);
 
   if (loading) {
     return (
@@ -282,7 +324,7 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
         <p className="text-xl text-slate-400 max-w-3xl mx-auto">
           Explore {articles.length}{" "}
           {articles.length === 1 ? "article" : "articles"} in this part of the
-          Indian Constitution
+          Indian Constitution.
         </p>
       </div>
 
@@ -342,11 +384,11 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
                 Ready to Test Your Knowledge?
               </h2>
               <p className="text-xl text-slate-300 mb-8 max-w-3xl mx-auto">
-                You've explored the articles in{" "}
+                You&apos;ve explored the articles in{" "}
                 <span className="text-orange-400 font-semibold">
                   {partData.partTitle}
                 </span>
-                . Now it's time to see how well you understood them!
+                . Now it&apos;s time to see how well you understood them!
               </p>
 
               {/* Learning Stats */}
@@ -418,7 +460,9 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
                       3
                     </div>
                     <div>
-                      <h4 className="font-bold text-white mb-1">Get Results</h4>
+                      <h4 className="font-bold text-white mb-1">
+                        Get Results
+                      </h4>
                       <p className="text-slate-400 text-sm">
                         See your score and learn from mistakes
                       </p>
@@ -431,11 +475,11 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
         </div>
       )}
 
-      {/* --- UPDATED QUIZ SECTION --- */}
+      {/* QUIZ SECTION */}
       {articles.length > 0 && (
         <Card className="mb-8 bg-gradient-to-br from-slate-800 to-slate-900 border-orange-500/30">
           {!showQuiz ? (
-            // "Start Quiz" Button
+            // Start Quiz
             <div className="text-center py-12">
               <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
                 <Brain className="w-10 h-10 text-white" />
@@ -444,8 +488,7 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
                 Test Your Knowledge
               </h3>
               <p className="text-slate-400 text-lg mb-8 max-w-2xl mx-auto">
-                Take an adaptive quiz on all articles in{" "}
-                {partData.partTitle}
+                Take an adaptive quiz on all articles in {partData.partTitle}
               </p>
               <Button
                 size="lg"
@@ -466,7 +509,7 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
               </p>
             </div>
           ) : !showResults ? (
-            // Quiz In Progress View (UPDATED)
+            // Quiz In Progress
             <div className="animate-fade-in">
               {/* Quiz Progress */}
               <div className="mb-8">
@@ -475,11 +518,17 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
                     Question {questionNumber} of {totalQuestions}
                   </span>
                   <span className="text-slate-400 font-semibold">
-                    Score: {quizHistory.filter(h => h.result.isCorrect).length}
+                    Score: {
+                      quizHistory.filter((h) => h.result.isCorrect).length
+                    }
                   </span>
                 </div>
                 <ProgressBar
-                  value={(questionNumber / totalQuestions) * 100}
+                  value={
+                    totalQuestions > 0
+                      ? (questionNumber / totalQuestions) * 100
+                      : 0
+                  }
                   color="primary"
                 />
               </div>
@@ -495,7 +544,7 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
                       {currentQuizQuestion.question}
                     </h4>
 
-                    {/* Options (UPDATED) */}
+                    {/* Options */}
                     <div className="space-y-3">
                       {currentQuizQuestion.options?.map(
                         (option: string, index: number) => (
@@ -503,7 +552,7 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
                             key={index}
                             onClick={() => handleAnswerSelect(index)}
                             className={`w-full p-5 rounded-xl text-left transition-all border-2 ${
-                              selectedAnswer === index // Use single selectedAnswer
+                              selectedAnswer === index
                                 ? "bg-orange-500 border-orange-400 text-white shadow-lg"
                                 : "bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500"
                             }`}
@@ -528,17 +577,20 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
                     </div>
                   </div>
 
-                  {/* Navigation (UPDATED) */}
+                  {/* Submit */}
                   <div className="flex justify-end items-center pt-6 border-t border-slate-700">
-                    {/* Previous Button is REMOVED */}
                     <Button
-                      onClick={handleSubmitAnswer} // Use new handler
-                      disabled={selectedAnswer === null || isSubmitting} // Use new disabled state
-                      icon={ isSubmitting ? <Loader className="w-5 h-5 animate-spin" /> : undefined }
+                      onClick={handleSubmitAnswer}
+                      disabled={selectedAnswer === null || isSubmitting}
+                      icon={
+                        isSubmitting ? (
+                          <Loader className="w-5 h-5 animate-spin" />
+                        ) : undefined
+                      }
                     >
                       {isSubmitting
                         ? "Submitting..."
-                        : questionNumber === totalQuestions // Check if last question
+                        : questionNumber === totalQuestions
                         ? "Finish Quiz"
                         : "Submit Answer"}
                     </Button>
@@ -547,9 +599,8 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
               )}
             </div>
           ) : (
-            // Results View (UPDATED)
+            // Results View
             <div className="text-center py-12 animate-fade-in">
-              {/* Results */}
               <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
                 <Award className="w-12 h-12 text-white" />
               </div>
@@ -567,7 +618,7 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
                   : "Keep learning! Review the articles and try again. 📚"}
               </p>
 
-              {/* Detailed Results (UPDATED) */}
+              {/* Detailed results */}
               <div className="max-w-3xl mx-auto mb-8 text-left space-y-4">
                 {quizHistory.map((historyItem: any, index: number) => {
                   const isCorrect = historyItem.result.isCorrect;
@@ -575,7 +626,9 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
                     <Card
                       key={index}
                       className={`${
-                        isCorrect ? "border-green-500/50" : "border-red-500/50"
+                        isCorrect
+                          ? "border-green-500/50"
+                          : "border-red-500/50"
                       }`}
                     >
                       <div className="flex items-start gap-4">
@@ -600,7 +653,11 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
                             }`}
                           >
                             Your answer:{" "}
-                            {historyItem.question.options?.[historyItem.answer]}
+                            {
+                              historyItem.question.options?.[
+                                historyItem.answer
+                              ]
+                            }
                           </p>
                           {!isCorrect && (
                             <p className="text-sm text-green-400 mb-2">
@@ -624,11 +681,11 @@ export const PartArticlesPage: React.FC<PartArticlesPageProps> = ({
                 })}
               </div>
 
-              {/* Action Buttons */}
+              {/* Actions */}
               <div className="flex gap-4 justify-center">
                 <Button
                   variant="outline"
-                  onClick={resetQuiz} // This is correct, it resets to the "Start Quiz" screen
+                  onClick={resetQuiz}
                   icon={<RotateCcw className="w-5 h-5" />}
                 >
                   Retake Quiz

@@ -109,7 +109,7 @@ function App() {
       case 'about':
         return <AboutPage />;
       case 'learn':
-        return <LearnPage onNavigate={handleNavigation} user={user} />;
+        return <LearnPage onNavigate={handleNavigation} user={user} initialData={pageData} />;
       case 'part-articles':
         return <PartArticlesPage onNavigate={handleNavigation} partData={pageData} />;
       case 'article':
@@ -125,7 +125,7 @@ function App() {
       case 'jigsaw-puzzle':
         return <JigsawPuzzle onNavigate={handleNavigation} />;
       case 'dashboard':
-        return user ? <Dashboard user={user} /> : <HomePage onNavigate={handleNavigation} user={user} />;
+        return user ? <Dashboard user={user} onNavigate={handleNavigation} /> : <HomePage onNavigate={handleNavigation} user={user} />;
       case 'contact':
         return <ContactPage />;
       case 'auth':
