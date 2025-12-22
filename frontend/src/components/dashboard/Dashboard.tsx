@@ -35,8 +35,12 @@ interface DashboardState {
     partName?: string;
   }[];
   bookmarks: any[];
+  perPart: {
+    partName: string;
+    readCount: number;
+    totalInPart: number;
+  }[];
 }
-
 
 // helper to ensure we always use clean article ids like "372" or "0"
 const normalizeArticleId = (raw: string): string => {
@@ -45,6 +49,30 @@ const normalizeArticleId = (raw: string): string => {
   const match = str.match(/(\d+[A-Za-z]*)/);
   return match ? match[1] : str;
 };
+
+type ActivityType = "game" | "article" | "quiz";
+
+interface RecentActivityItem {
+  id: number;
+  type: ActivityType;
+  title: string;
+  articleNumber?: string;
+  partName?: string;
+  score?: number;
+  progress?: number;
+  date: string;
+}
+
+// 🔹 static weekly data (0–100 = bar height %)
+const weeklyProgress = [
+  { day: "Mon", value: 65 },
+  { day: "Tue", value: 80 },
+  { day: "Wed", value: 45 },
+  { day: "Thu", value: 90 },
+  { day: "Fri", value: 75 },
+  { day: "Sat", value: 60 },
+  { day: "Sun", value: 85 },
+];
 
 export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
   const [data, setData] = useState<DashboardState | null>(null);
@@ -61,7 +89,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
         const res: any = await progressAPI.getDashboard();
         if (!res?.success || cancelled) return;
 
-        const { stats, lastArticles, bookmarks } = res;
+        const { stats, lastArticles, bookmarks, perPart } = res;
 
         setData({
           totalScore: stats?.totalScore ?? 0,
@@ -69,12 +97,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
           articlesRead: stats?.articlesRead ?? 0,
           quizzesTaken: stats?.quizzesTaken ?? 0,
           currentStreak: stats?.currentStreak ?? 0,
-          joinedDate: user.id, // or from backend later
+          joinedDate: user.id,
           lastArticles: (lastArticles || []).map((a: any) => ({
             articleNumber: normalizeArticleId(String(a.articleNumber)),
             partName: a.partName,
           })),
           bookmarks: bookmarks || [],
+          perPart: perPart || [],
         });
       } catch (err) {
         console.error("Failed to load dashboard data", err);
@@ -111,38 +140,34 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
     joinedDate: data.joinedDate ?? "—",
   };
 
-  const recentActivity = data.lastArticles
-  .slice(0, 3)
-  .map((a, index) => ({
-    id: index + 1,
-    type: "article" as const,
-    articleNumber: a.articleNumber,
-    partName: a.partName,                // add this
-    title: `Article ${a.articleNumber}`,
-    progress: 100,
-    date: new Date().toISOString().slice(0, 10),
-  })) as {
-    id: number;
-    type: "game" | "article" | "quiz";
-    title: string;
-    articleNumber?: string;
-    partName?: string;
-    score?: number;
-    progress?: number;
-    date: string;
-  }[];
+  const recentActivity: RecentActivityItem[] = data.lastArticles
+    .slice(0, 3)
+    .map((a, index): RecentActivityItem => ({
+      id: index + 1,
+      type: "article",
+      articleNumber: a.articleNumber,
+      partName: a.partName,
+      title: `Article ${a.articleNumber}`,
+      progress: 100,
+      date: new Date().toISOString().slice(0, 10),
+    }));
 
+  // top 3 parts by completion %, non‑full first
+  const sortedPerPart = [...data.perPart]
+    .filter((p) => p.totalInPart > 0)
+    .sort((a, b) => {
+      const pa = a.readCount / a.totalInPart;
+      const pb = b.readCount / b.totalInPart;
 
+      const aFull = pa === 1;
+      const bFull = pb === 1;
 
-  const weeklyProgress = [
-    { day: "Mon", value: 65 },
-    { day: "Tue", value: 80 },
-    { day: "Wed", value: 45 },
-    { day: "Thu", value: 90 },
-    { day: "Fri", value: 75 },
-    { day: "Sat", value: 60 },
-    { day: "Sun", value: 85 },
-  ];
+      if (aFull && !bFull) return 1;
+      if (!aFull && bFull) return -1;
+
+      return pb - pa;
+    })
+    .slice(0, 3);
 
   return (
     <div className="w-full max-w-7xl animate-fade-in">
@@ -197,8 +222,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
 
       {/* Main Content Grid */}
       <div className="grid lg:grid-cols-3 gap-8 mb-8">
-        {/* Learning Progress */}
         <div className="lg:col-span-2">
+          {/* Learning Progress */}
           <Card>
             <div className="flex items-center gap-3 mb-6">
               <TrendingUp className="w-6 h-6 text-orange-400" />
@@ -208,42 +233,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
             </div>
 
             <div className="space-y-6">
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-slate-300 font-semibold">
-                    Fundamental Rights
-                  </span>
-                  <span className="text-slate-400 text-sm">
-                    18/30 Articles
-                  </span>
+              {/* top 3 Parts by percentage */}
+              {sortedPerPart.map((part) => (
+                <div key={part.partName}>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-slate-300 font-semibold">
+                      {part.partName}
+                    </span>
+                    <span className="text-slate-400 text-sm">
+                      {part.readCount}/{part.totalInPart} Articles
+                    </span>
+                  </div>
+                  <ProgressBar
+                    value={part.readCount}
+                    max={part.totalInPart || 1}
+                    color="primary"
+                  />
                 </div>
-                <ProgressBar value={18} max={30} color="primary" />
-              </div>
+              ))}
 
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-slate-300 font-semibold">
-                    Directive Principles
-                  </span>
-                  <span className="text-slate-400 text-sm">
-                    10/19 Articles
-                  </span>
-                </div>
-                <ProgressBar value={10} max={19} color="info" />
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-slate-300 font-semibold">
-                    Union & States
-                  </span>
-                  <span className="text-slate-400 text-sm">
-                    45/100 Articles
-                  </span>
-                </div>
-                <ProgressBar value={45} max={100} color="warning" />
-              </div>
-
+              {/* Overall progress (always shown) */}
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-slate-300 font-semibold">
@@ -262,25 +271,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
             </div>
           </Card>
 
-          {/* Weekly Activity Chart */}
+          {/* 🔹 Weekly Activity Chart (static data) */}
           <Card className="mt-8">
             <div className="flex items-center gap-3 mb-6">
               <BarChart3 className="w-6 h-6 text-orange-400" />
             </div>
             <h2 className="text-2xl font-bold text-white">Weekly Activity</h2>
-            <div className="flex items-end justify-between gap-2 h-48">
+
+            <div className="flex items-end justify-between gap-4 h-48">
               {weeklyProgress.map((day, index) => (
                 <div
                   key={index}
                   className="flex-1 flex flex-col items-center gap-2"
                 >
-                  <div
-                    className="relative w-full bg-slate-700 rounded-t-lg overflow-hidden"
-                    style={{ height: "100%" }}
-                  >
+                  <div className="w-full h-40 flex items-end">
                     <div
-                      className="absolute bottom-0 w-full bg-gradient-to-t from-orange-500 to-red-500 rounded-t-lg transition-all duration-500"
-                      style={{ height: `${day.value}%` }}
+                      className="w-full rounded-t-lg bg-orange-500 transition-all duration-500"
+                      style={{ height: `${day.value}%` }} // 0–100 of h-40
                     />
                   </div>
                   <span className="text-xs text-slate-400 font-semibold">
@@ -289,6 +296,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
                 </div>
               ))}
             </div>
+
             <div className="mt-4 text-center text-sm text-slate-500">
               Average daily activity: 72 minutes
             </div>
@@ -302,9 +310,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
           <Card>
             <div className="flex items-center gap-3 mb-6">
               <Calendar className="w-6 h-6 text-orange-400" />
-              <h2 className="text-xl font-bold text-white">
-                Recent Activity
-              </h2>
+              <h2 className="text-xl font-bold text-white">Recent Activity</h2>
             </div>
             <div className="space-y-4">
               {recentActivity.length === 0 && (
@@ -317,30 +323,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
                   key={activity.id}
                   onClick={() => {
                     if (activity.type === "article" && activity.articleNumber) {
-                      // Go to Learn → PartArticles with this part and article
                       onNavigate("learn", {
                         fromDashboard: true,
-                        targetPartName: activity.partName,        // need partName in recentActivity
+                        targetPartName: activity.partName,
                         targetArticleNumber: activity.articleNumber,
                       });
                     }
                   }}
-
                   className="flex items-start gap-3 p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors cursor-pointer"
                 >
                   <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${activity.type === "game"
-                      ? "bg-gradient-to-br from-blue-500 to-cyan-500"
-                      : activity.type === "article"
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      activity.type === "game"
+                        ? "bg-gradient-to-br from-blue-500 to-cyan-500"
+                        : activity.type === "article"
                         ? "bg-gradient-to-br from-purple-500 to-pink-500"
                         : "bg-gradient-to-br from-green-500 to-emerald-500"
-                      }`}
+                    }`}
                   >
                     {activity.type === "game"
                       ? "🎮"
                       : activity.type === "article"
-                        ? "📖"
-                        : "📝"}
+                      ? "📖"
+                      : "📝"}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-white font-semibold text-sm truncate">

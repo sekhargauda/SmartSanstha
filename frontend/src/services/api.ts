@@ -89,13 +89,14 @@ export const quizAPI = {
 // =================================================================
 export const progressAPI = {
   markArticleRead: (articleNumber: string, partName?: string) =>
-    api.post('/progress/article/read', { articleNumber, partName }),
+    api.post("/progress/article/read", { articleNumber, partName }),
 
   toggleBookmark: (articleNumber: string, partName?: string) =>
-    api.post('/progress/article/bookmark', { articleNumber, partName }),
+    api.post("/progress/article/bookmark", { articleNumber, partName }),
 
-  getDashboard: () => api.get('/progress/dashboard'),
+  getDashboard: () => api.get("/progress/dashboard"),
 
   getPartProgress: (partName: string) =>
     api.get(`/progress/part/${encodeURIComponent(partName)}`),
 };
+
