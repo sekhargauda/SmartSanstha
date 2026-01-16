@@ -14,7 +14,7 @@ import { Card } from "../common/Card";
 import { ProgressBar } from "../common/ProgressBar";
 import { UserProgress } from "./UserProgress";
 import { ScoreCard } from "./ScoreCard";
-import { AchievementBadges } from "./AchievementBadges";
+import { Bookmarks } from "./Bookmarks";
 import { progressAPI } from "../../services/api";
 import type { UserData } from "../../App";
 
@@ -305,7 +305,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
 
         {/* Sidebar */}
         <div className="space-y-8">
-          <AchievementBadges />
+          <Bookmarks
+            bookmarks={data.bookmarks}
+            onNavigate={onNavigate}
+          />
 
           <Card>
             <div className="flex items-center gap-3 mb-6">
@@ -333,19 +336,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate }) => {
                   className="flex items-start gap-3 p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors cursor-pointer"
                 >
                   <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      activity.type === "game"
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${activity.type === "game"
                         ? "bg-gradient-to-br from-blue-500 to-cyan-500"
                         : activity.type === "article"
-                        ? "bg-gradient-to-br from-purple-500 to-pink-500"
-                        : "bg-gradient-to-br from-green-500 to-emerald-500"
-                    }`}
+                          ? "bg-gradient-to-br from-purple-500 to-pink-500"
+                          : "bg-gradient-to-br from-green-500 to-emerald-500"
+                      }`}
                   >
                     {activity.type === "game"
                       ? "🎮"
                       : activity.type === "article"
-                      ? "📖"
-                      : "📝"}
+                        ? "📖"
+                        : "📝"}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-white font-semibold text-sm truncate">
