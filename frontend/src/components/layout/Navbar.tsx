@@ -46,8 +46,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate, user, o
 
   // Helper to determine if a link is active
   const checkActive = (itemId: string) => {
-    return currentPage === itemId || 
-           (itemId === 'games' && ['memory-game', 'rights-duties-game'].includes(currentPage));
+    return currentPage === itemId ||
+      (itemId === 'games' && ['memory-game', 'rights-duties-game'].includes(currentPage));
   };
 
   const NavLink = ({ item, action, children, customActive }: { item?: any; action?: () => void; children: React.ReactNode; customActive?: boolean }) => {
@@ -59,7 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate, user, o
         onClick={action || (() => { if (item) onNavigate(item.id); setIsMenuOpen(false); })}
         className={`
           px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300
-          ${isActive 
+          ${isActive
             ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg' // Active State (Orange)
             : 'text-slate-300 hover:bg-slate-800 hover:text-white'} // Inactive State (Grey)
         `}
@@ -124,8 +124,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate, user, o
               </>
             ) : (
               // Sign In Button: NOW USES STANDARD STYLING (Only Orange if Active)
-              <NavLink 
-                action={() => onNavigate('auth')} 
+              <NavLink
+                action={() => onNavigate('auth')}
                 customActive={currentPage === 'auth'}
               >
                 Sign In
@@ -147,12 +147,13 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate, user, o
       {isMenuOpen && (
         <div className="md:hidden animate-fade-in-down border-t border-slate-800">
           <nav className="px-4 py-3 space-y-2">
-            {navItems.map(item => (
+            {navItems.map((item) => (
               <MobileNavLink key={item.id} item={item}>
-                <item.icon className="w-5 h-5" />{item.label}
+                {item.label}
               </MobileNavLink>
             ))}
-            
+
+
             {user ? (
               <div className="pt-2 border-t border-slate-700/50">
                 <MobileNavLink action={onLogout}>
@@ -161,7 +162,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate, user, o
               </div>
             ) : (
               <div className="pt-2 border-t border-slate-700/50">
-                <MobileNavLink 
+                <MobileNavLink
                   action={() => onNavigate('auth')}
                   customActive={currentPage === 'auth'}
                 >
