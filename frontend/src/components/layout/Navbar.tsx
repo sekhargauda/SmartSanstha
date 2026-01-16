@@ -154,6 +154,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate, user, o
             ))}
 
 
+
             {user ? (
               <div className="pt-2 border-t border-slate-700/50">
                 <MobileNavLink action={onLogout}>
