@@ -656,7 +656,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
 
       const token = await user.getIdToken();
 
-      const response = await fetch(`${API_URL}/api/auth/firebase`, {
+      const response = await fetch(`${API_URL}/auth/firebase`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
