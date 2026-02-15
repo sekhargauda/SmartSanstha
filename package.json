@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/harshgajera101/SmartSanstha.git"
+    "url": "git+https://github.com/sekhargauda/SmartSanstha.git"
   },
   "author": "Sekhar Gauda",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/harshgajera101/SmartSanstha/issues"
+    "url": "https://github.com/sekhargauda/SmartSanstha/issues"
   },
-  "homepage": "https://github.com/harshgajera101/SmartSanstha#readme",
+  "homepage": "https://github.com/sekhargauda/SmartSanstha#readme",
   "dependencies": {
     "concurrently": "^9.2.1"
   },
