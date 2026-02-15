@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "install-all": "npm install --prefix backend && npm install --prefix frontend",
-    "dev": "concurrently \"npm start --prefix backend\" \"npm run dev --prefix frontend\""
+    "dev": "concurrently \"npm start --prefix backend\" \"npm run dev --prefix frontend\"",
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
