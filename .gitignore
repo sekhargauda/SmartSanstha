@@ -1,0 +1,4 @@
+.DS_Store
+frontend/public/models/courtroom.glb
+node_modules
+package-lock.json
