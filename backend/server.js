@@ -91,12 +91,14 @@ app.use("/api/user-stats", userStatsRoutes);
 
 const frontendPath = path.join(__dirname, "dist");
 
+// Serve static files
 app.use(express.static(frontendPath));
 
-// React Router support
-app.get((req, res) => {
+// React Router SPA fallback
+app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
+
 
 // =====================================================
 // START SERVER

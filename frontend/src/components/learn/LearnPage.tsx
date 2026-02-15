@@ -861,7 +861,7 @@ export const LearnPage: React.FC<LearnPageProps> = ({ user }) => {
       </Card>
 
       {/* Recommended Parts */}
-      {user && recommendedParts.length > 0 && (
+      {user && user.category !== "admin" && recommendedParts.length > 0 && (
         <div className="mb-16">
           <div className="flex items-center gap-3 mb-6">
             <User className="w-6 h-6 text-orange-400" />
