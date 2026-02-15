@@ -1,4 +1,5 @@
 .DS_Store
 .env
+.env.prod
 node_modules
 config/firebase-service-account.json

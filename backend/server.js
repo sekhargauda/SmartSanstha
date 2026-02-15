@@ -37,29 +37,30 @@ const PORT = process.env.PORT || 5001;
 // =================================================================
 console.log('⚙️  Setting up middleware...');
 
+import cors from "cors";
+
 const allowedOrigins = [
-  'http://localhost:5173',                   // local Vite
-  'https://smartsanstha-7zax.onrender.com', // your deployed frontend
-  'https://smartsanstha-d3ba.onrender.com'
-  // 'https://hoppscotch.io',
+  "http://localhost:5173", // local dev
+  "https://smartsanstha-d3ba.onrender.com" // production
 ];
 
 app.use(
   cors({
-    origin(origin, callback) {
-      // allow tools/no origin (like curl, Postman)
+    origin: function (origin, callback) {
+      // Allow server-to-server or tools (Postman)
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      console.log('❌ CORS blocked for origin:', origin);
-      return callback(new Error('Not allowed by CORS'));
+      console.log("❌ Blocked by CORS:", origin);
+      return callback(new Error("Not allowed by CORS"));
     },
-    credentials: true, // 🔴 REQUIRED for cookies
+    credentials: true,
   })
 );
+
 
 app.use(express.json());
 app.use(cookieParser());
@@ -139,15 +140,28 @@ app.use("/api/progress", progressRoutes);
 app.use("/api/user-stats", userStatsRoutes);
 
 
-// 404 handler
-app.use((req, res) => {
-  console.log(`❌ 404 - Route not found: ${req.method} ${req.url}`);
-  res.status(404).json({ 
-    success: false, 
-    error: 'Route not found',
-    path: req.url 
-  });
+// // 404 handler
+// app.use((req, res) => {
+//   console.log(`❌ 404 - Route not found: ${req.method} ${req.url}`);
+//   res.status(404).json({ 
+//     success: false, 
+//     error: 'Route not found',
+//     path: req.url 
+//   });
+// });
+
+
+// ===============================
+// SERVE FRONTEND
+// ===============================
+const frontendPath = path.join(__dirname, "dist");
+
+app.use(express.static(frontendPath));
+
+app.get((req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
+
 
 // =================================================================
 // START SERVER
