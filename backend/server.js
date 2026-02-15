@@ -89,17 +89,14 @@ app.use("/api/user-stats", userStatsRoutes);
 // SERVE FRONTEND (MUST BE AFTER API ROUTES)
 // =====================================================
 
-const frontendPath = path.join(__dirname, "../frontend/dist");
+const frontendPath = path.join(__dirname, "dist");
 
-
-
-// Serve static files
 app.use(express.static(frontendPath));
 
-// React Router SPA fallback
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
+
 
 
 
