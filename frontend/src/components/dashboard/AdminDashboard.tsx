@@ -366,7 +366,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ admin }) => {
   const [error, setError] = useState<string | null>(null);
 
   const API_URL =
-    import.meta.env.VITE_AUTH_API_BASE_URL || 'http://localhost:5001';
+  import.meta.env.VITE_API_BASE_URL || "/api";
+
 
   /* ---------------- HELPERS ---------------- */
   const formatCategoryName = (category: string) => {
@@ -441,7 +442,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ admin }) => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/admin/stats`, {
+        const res = await fetch(`${API_URL}/admin/stats`, {
           credentials: 'include',
         });
 

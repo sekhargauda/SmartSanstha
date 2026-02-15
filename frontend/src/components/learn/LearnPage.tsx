@@ -696,7 +696,7 @@ export const LearnPage: React.FC<LearnPageProps> = ({ user }) => {
       }
     } catch (err: any) {
       console.error('❌ Error fetching data:', err);
-      setError('Failed to load data. Make sure backend is running on http://localhost:5001');
+      setError('Failed to load data. Please check server connection.');
     } finally {
       setLoading(false);
     }
@@ -797,7 +797,8 @@ export const LearnPage: React.FC<LearnPageProps> = ({ user }) => {
               Try Again
             </button>
             <button
-              onClick={() => window.open('http://localhost:5001/api/test', '_blank')}
+              onClick={() => window.open('/api/test', '_blank')
+}
               className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-semibold transition-all"
             >
               Test Backend

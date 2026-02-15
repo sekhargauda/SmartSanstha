@@ -519,7 +519,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
 
-  const API_URL = import.meta.env.VITE_AUTH_API_BASE_URL;
+  const API_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
   const today = new Date();
   const maxDate = new Date(today.getFullYear() - 12, today.getMonth(), today.getDate())
@@ -605,7 +605,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
 
       const token = await userCredential.user.getIdToken(true);
 
-      await fetch(`${API_URL}/api/auth/firebase`, {
+      await fetch(`${API_URL}/auth/firebase`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,

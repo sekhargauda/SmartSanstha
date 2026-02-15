@@ -84,7 +84,7 @@
 //   useEffect(() => {
 //     const checkUserSession = async () => {
 //       try {
-//         const response = await fetch(`${API_URL}/api/user/me`, {
+//         const response = await fetch(`${API_URL}/user/me`, {
 //           credentials: 'include',
 //         });
 
@@ -92,13 +92,13 @@
 //           const data = await response.json();
 //           setUser(data.profile);
 //         } else if (response.status === 401) {
-//           const refreshResponse = await fetch(`${API_URL}/api/auth/refresh`, {
+//           const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
 //             method: 'POST',
 //             credentials: 'include',
 //           });
 
 //           if (refreshResponse.ok) {
-//             const retryResponse = await fetch(`${API_URL}/api/user/me`, {
+//             const retryResponse = await fetch(`${API_URL}/user/me`, {
 //               credentials: 'include',
 //             });
 
@@ -124,7 +124,7 @@
 
 //   const handleLogout = async () => {
 //     try {
-//       await fetch(`${API_URL}/api/auth/logout`, {
+//       await fetch(`${API_URL}/auth/logout`, {
 //         method: 'POST',
 //         credentials: 'include',
 //       });
@@ -394,14 +394,14 @@ function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  const API_URL =
-    import.meta.env.VITE_AUTH_API_BASE_URL || "http://localhost:5001";
+  const API_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+
 
   // Check user session on mount
   useEffect(() => {
     const checkUserSession = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/user/me`, {
+        const response = await fetch(`${API_URL}/user/me`, {
           credentials: "include",
         });
 
@@ -409,13 +409,13 @@ function AppContent() {
           const data = await response.json();
           setUser(data.profile);
         } else if (response.status === 401) {
-          const refreshResponse = await fetch(`${API_URL}/api/auth/refresh`, {
+          const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
             method: "POST",
             credentials: "include",
           });
 
           if (refreshResponse.ok) {
-            const retryResponse = await fetch(`${API_URL}/api/user/me`, {
+            const retryResponse = await fetch(`${API_URL}/user/me`, {
               credentials: "include",
             });
 
@@ -441,7 +441,7 @@ function AppContent() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_URL}/api/auth/logout`, {
+      await fetch(`${API_URL}/auth/logout`, {
         method: "POST",
         credentials: "include",
       });

@@ -265,7 +265,8 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLoginSuccess }
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const API_URL = import.meta.env.VITE_AUTH_API_BASE_URL || 'http://localhost:5001';
+  const API_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -273,7 +274,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLoginSuccess }
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/admin/login`, {
+      const response = await fetch(`${API_URL}/auth/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

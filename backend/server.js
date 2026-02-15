@@ -37,8 +37,6 @@ const PORT = process.env.PORT || 5001;
 // =================================================================
 console.log('⚙️  Setting up middleware...');
 
-import cors from "cors";
-
 const allowedOrigins = [
   "http://localhost:5173", // local dev
   "https://smartsanstha-d3ba.onrender.com" // production
@@ -54,7 +52,7 @@ app.use(
         return callback(null, true);
       }
 
-      console.log("❌ Blocked by CORS:", origin);
+      console.log("Blocked by CORS:", origin);
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
