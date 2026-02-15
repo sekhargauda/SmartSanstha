@@ -89,7 +89,8 @@ app.use("/api/user-stats", userStatsRoutes);
 // SERVE FRONTEND (MUST BE AFTER API ROUTES)
 // =====================================================
 
-const frontendPath = path.join(__dirname, "dist");
+const frontendPath = path.join(__dirname, "../frontend/dist");
+
 
 
 // Serve static files
