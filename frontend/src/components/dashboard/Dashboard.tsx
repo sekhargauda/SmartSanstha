@@ -599,9 +599,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
               <div>
                 <div className="flex justify-between items-center mb-2 pt-4 border-t border-slate-700/50">
                   <span className="text-slate-300 font-semibold">Overall Completion</span>
-                  <span className="text-slate-400 text-sm">{data.articlesRead}/395</span>
+                  <span className="text-slate-400 text-sm">{data.articlesRead}/466</span>
                 </div>
-                <ProgressBar value={data.articlesRead} max={395} color="success" />
+                <ProgressBar value={data.articlesRead} max={466} color="success" />
               </div>
             </div>
           </Card>
