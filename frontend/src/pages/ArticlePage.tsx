@@ -1138,10 +1138,10 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
       </div>
 
       {/* Content Tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="grid grid-cols-2 gap-3 mb-6 w-fit">
         <button
           onClick={() => setActiveTab("simplified")}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all ${activeTab === "simplified" ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg" : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold transition-all text-sm sm:text-base min-w-[160px] ${activeTab === "simplified" ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg" : "bg-slate-800 text-slate-400 hover:bg-slate-700"
             }`}
         >
           <Lightbulb className="w-5 h-5" />
@@ -1149,7 +1149,7 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
         </button>
         <button
           onClick={() => setActiveTab("original")}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all ${activeTab === "original" ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg" : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold transition-all text-sm sm:text-base min-w-[160px]  ${activeTab === "original" ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg" : "bg-slate-800 text-slate-400 hover:bg-slate-700"
             }`}
         >
           <FileText className="w-5 h-5" />
@@ -1484,12 +1484,23 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
       {/* NAVIGATION CONTROL BAR */}
       {allArticles.length > 0 && (
         <Card className="mb-8 bg-gradient-to-r from-slate-800/50 to-slate-900/50 border-slate-700">
-          <div className="flex items-center justify-between gap-6 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-4">
             <button
               onClick={handlePreviousArticle}
               disabled={!hasPrevious}
-              className={`flex items-center gap-3 px-8 py-4 rounded-xl font-semibold transition-all border-2 ${hasPrevious ? "border-orange-500 text-orange-400 hover:bg-orange-500/10" : "border-slate-700 text-slate-600 cursor-not-allowed"
-                }`}
+              className={`flex items-center justify-center gap-2 px-4 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold transition-all border-2 text-sm sm:text-base ${
+  hasPrevious
+    ? "border-orange-500 text-orange-400 hover:bg-orange-500/10"
+    : "border-slate-700 text-slate-600 cursor-not-allowed"
+}`}
+
+
+//                 className={`flex items-center justify-center gap-2 px-4 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold transition-all text-sm sm:text-base ${
+//   hasNext
+//     ? "bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-lg"
+//     : "bg-slate-700 text-slate-600 cursor-not-allowed"
+// }`}
+
             >
               <ChevronLeft className="w-5 h-5" />
               <span>Previous</span>
@@ -1501,8 +1512,12 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
             <button
               onClick={handleNextArticle}
               disabled={!hasNext}
-              className={`flex items-center gap-3 px-8 py-4 rounded-xl font-semibold transition-all ${hasNext ? "bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-lg" : "bg-slate-700 text-slate-600 cursor-not-allowed"
-                }`}
+              className={`flex items-center justify-center gap-2 px-4 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold transition-all text-sm sm:text-base ${
+  hasNext
+    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-lg"
+    : "bg-slate-700 text-slate-600 cursor-not-allowed"
+}`}
+
             >
               <span>Next</span>
               <ChevronRight className="w-5 h-5" />
