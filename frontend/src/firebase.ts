@@ -36,4 +36,4 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase Authentication
 export const auth = getAuth(app);
 
-console.log("✅ Firebase initialized successfully");
+// console.log("✅ Firebase initialized successfully");
