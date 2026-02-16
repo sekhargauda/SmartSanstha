@@ -141,8 +141,6 @@ const API_BASE_URL =
 const WITH_CREDENTIALS = true;
 // ---------------------
 
-console.log('🔗 Connecting to API:', API_BASE_URL);
-
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
