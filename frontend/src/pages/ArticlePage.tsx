@@ -788,47 +788,48 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
   }, [articleNumber, articleData]);
 
   const fetchArticle = async (artNum: string) => {
-  try {
-    setLoading(true);
-    setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-    const response: any = await articleAPI.getArticle(artNum);
+      const response: any = await articleAPI.getArticle(artNum);
 
-    if (response?.success) {
-      setArticle(response.data);
+      if (response?.success) {
+        setArticle(response.data);
 
-      // ✅ ADD THIS BLOCK HERE
-      if (response.data?.part?.name) {
-        const partName = response.data.part.name;
+        // ✅ ADD THIS BLOCK HERE
+        if (response.data?.part?.name) {
+          const partName = response.data.part.name;
 
-        const partArticles: any =
-          await articleAPI.getArticlesByPart(partName);
+          const partArticles: any =
+            await articleAPI.getArticlesByPart(partName);
 
-        if (partArticles?.success) {
-          setAllArticles(partArticles.data);
+          if (partArticles?.success) {
+            setAllArticles(partArticles.data);
 
-          const index = partArticles.data.findIndex(
-            (a: any) =>
-              String(a.articleNumber)
-                .replace("Article ", "")
-                .trim() === artNum
-          );
+            const normalize = (val: any) =>
+              String(val).replace("Article ", "").trim();
 
-          setCurrentIndex(index >= 0 ? index : 0);
+            const index = partArticles.data.findIndex(
+              (a: any) => normalize(a.article) === normalize(artNum)
+            );
+
+
+            setCurrentIndex(index >= 0 ? index : 0);
+          }
         }
-      }
 
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
-      setError("Failed to load article data");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        setError("Failed to load article data");
+      }
+    } catch (err: any) {
+      console.error("❌ Error fetching article:", err);
+      setError("Failed to load article. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  } catch (err: any) {
-    console.error("❌ Error fetching article:", err);
-    setError("Failed to load article. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
 
@@ -840,7 +841,8 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
     const num = normalizeArticleId(raw);
     const partName = article.part?.name || articleData?.partName;
     progressAPI.markArticleRead(num, partName).catch((e: any) => console.error("markArticleRead failed:", e));
-  }, [article, articleData, articleNumber]);
+  }, [article?.id]);
+
 
   useEffect(() => {
     const loadBookmarkState = async () => {

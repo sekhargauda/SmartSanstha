@@ -278,7 +278,8 @@ const cleanArticleNumber = (raw) => {
 export const markArticleRead = async (req, res) => {
   try {
     const userId = req.user?._id || req.user?.id;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    if (!userId)
+      return res.status(401).json({ message: "Unauthorized" });
 
     let { articleNumber, partName } = req.body;
     if (!articleNumber)
@@ -286,53 +287,94 @@ export const markArticleRead = async (req, res) => {
 
     articleNumber = cleanArticleNumber(articleNumber);
 
-    let progress = await UserArticleProgress.findOne({ user: userId });
-
-    if (!progress) {
-      progress = await UserArticleProgress.create({ user: userId });
-    }
-
-    const alreadyCompleted = progress.completedArticles.some(
-      (a) => a.articleNumber === articleNumber
+    // ✅ Ensure document exists
+    await UserArticleProgress.findOneAndUpdate(
+      { user: userId },
+      { $setOnInsert: { user: userId } },
+      { upsert: true, new: true }
     );
 
-    if (!alreadyCompleted) {
-      progress.completedArticles.push({
-        articleNumber,
-        partName,
-      });
-    }
+    // =====================================================
+    // ✅ COMPLETED ARTICLES (Prevent duplicates properly)
+    // =====================================================
 
-    progress.recentlyRead = progress.recentlyRead.filter(
-      (a) => a.articleNumber !== articleNumber
+    // Remove existing entry (if revisiting)
+    await UserArticleProgress.updateOne(
+      { user: userId },
+      { $pull: { completedArticles: { articleNumber } } }
     );
 
-    progress.recentlyRead.unshift({
-      articleNumber,
-      partName,
+    // Add fresh entry with timestamp
+    await UserArticleProgress.updateOne(
+      { user: userId },
+      {
+        $push: {
+          completedArticles: {
+            articleNumber,
+            partName,
+            completedAt: new Date(),
+          },
+        },
+      }
+    );
+
+    // =====================================================
+    // ✅ RECENTLY READ (Keep max 10, latest on top)
+    // =====================================================
+
+    // Remove existing entry
+    await UserArticleProgress.updateOne(
+      { user: userId },
+      { $pull: { recentlyRead: { articleNumber } } }
+    );
+
+    // Add to top and limit to 10
+    await UserArticleProgress.updateOne(
+      { user: userId },
+      {
+        $push: {
+          recentlyRead: {
+            $each: [
+              {
+                articleNumber,
+                partName,
+                lastReadAt: new Date(),
+              },
+            ],
+            $position: 0,
+            $slice: 10,
+          },
+        },
+      }
+    );
+
+    // =====================================================
+    // ✅ UPDATE STATS
+    // =====================================================
+
+    const progress = await UserArticleProgress.findOne({
+      user: userId,
     });
-
-    progress.recentlyRead = progress.recentlyRead.slice(0, 10);
-
-    await progress.save();
 
     const stats = await getOrCreateStats(userId, req.user.type);
 
     if (stats) {
       stats.articlesRead = progress.completedArticles.length;
       stats.articleScore = stats.articlesRead * 10;
-      stats.totalScore =
-        stats.articleScore + stats.gameScore;
+      stats.totalScore = stats.articleScore + stats.gameScore;
       stats.lastActive = new Date();
       await stats.save();
     }
 
     return res.json({ success: true, stats });
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+
 
 
 export const toggleBookmark = async (req, res) => {
