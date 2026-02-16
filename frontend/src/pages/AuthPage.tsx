@@ -600,7 +600,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
         displayName: name,
       });
 
-      await sendEmailVerification(userCredential.user);
+      await sendEmailVerification(userCredential.user, {
+        url: import.meta.env.VITE_EMAIL_REDIRECT_URL,
+        handleCodeInApp: true,
+      });
+
 
 
       const token = await userCredential.user.getIdToken(true);
