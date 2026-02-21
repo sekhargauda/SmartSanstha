@@ -283,13 +283,11 @@
 //   );
 // };
 
-
-
 // frontend/src/components/chatbot/ChatbotFloating.tsx
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, X, Send, User, Loader2, ArrowUpLeft } from 'lucide-react';
+import { MessageSquare, X, Send, User, Loader2, ArrowUpLeft, Mic } from 'lucide-react';
 import { UserData } from '@/App';
 import logo from '../../assets/bot_LOGO.png';
 
@@ -315,7 +313,11 @@ export const ChatbotFloating: React.FC<ChatbotFloatingProps> = ({ user }) => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  
+  // for voice input
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
   // State for Resizable Window
   const [windowSize, setWindowSize] = useState({ width: 384, height: 500 });
   const isResizingRef = useRef(false);
@@ -340,6 +342,55 @@ export const ChatbotFloating: React.FC<ChatbotFloatingProps> = ({ user }) => {
       };
       setMessages([initialMessage]);
     }
+  }, []);
+
+
+  useEffect(() => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      console.warn("Speech Recognition not supported.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-IN";
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+
+      setInputValue((prev) =>
+        prev.trim() ? prev.trim() + " " + transcript : transcript
+      );
+
+      recognition.stop();
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      recognition.stop();
+      recognition.onresult = null;
+      recognition.onend = null;
+      recognition.onerror = null;
+    };
   }, []);
 
   // Resize Logic
@@ -378,7 +429,32 @@ export const ChatbotFloating: React.FC<ChatbotFloatingProps> = ({ user }) => {
     document.body.style.cursor = 'nwse-resize';
   };
 
+  const handleVoiceInput = () => {
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+
+    if (isListening) {
+      recognition.stop();
+    } else {
+      try {
+        recognition.start();
+      } catch (err) {
+        console.log("Recognition already started");
+      }
+    }
+  };
+
   const handleSend = async () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch { }
+    }
+
+    setIsListening(false);
+
+    inputRef.current?.blur();
+
     if (!inputValue.trim() || isLoading) return;
 
     if (!user) {
@@ -484,25 +560,25 @@ export const ChatbotFloating: React.FC<ChatbotFloatingProps> = ({ user }) => {
           onClick={() => setIsOpen(true)}
           className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-2xl hover:shadow-orange-500/50 transition-all duration-300 hover:scale-110 flex items-center justify-center group overflow-hidden"
         >
-          <img 
-            src={logo} 
-            alt="Chat" 
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform p-2" 
+          <img
+            src={logo}
+            alt="Chat"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform p-2"
           />
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></span>
         </button>
       )}
 
       {isOpen && (
-        <div 
+        <div
           className="fixed bottom-6 right-6 z-50 bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 flex flex-col overflow-hidden"
-          style={{ 
-            width: `${windowSize.width}px`, 
+          style={{
+            width: `${windowSize.width}px`,
             height: `${windowSize.height}px`,
             transition: isResizingRef.current ? 'none' : 'width 0.2s, height 0.2s'
           }}
         >
-           {/* Resizing Handle (Inside Top Left Corner) */}
+          {/* Resizing Handle (Inside Top Left Corner) */}
           <div
             onMouseDown={startResizing}
             className="absolute top-0 left-0 w-6 h-6 bg-black/20 hover:bg-black/40 cursor-nwse-resize flex items-center justify-center z-[60] rounded-br-lg transition-colors"
@@ -522,19 +598,19 @@ export const ChatbotFloating: React.FC<ChatbotFloatingProps> = ({ user }) => {
               </div>
             </div>
             <div className="flex items-center">
-                <button
+              <button
                 onClick={handleClearChat}
                 title="Start New Chat"
                 className="p-2 rounded-full hover:bg-white/20 transition-colors mr-2"
-                >
+              >
                 <MessageSquare className="w-5 h-5 text-white" />
-                </button>
-                <button
+              </button>
+              <button
                 onClick={() => setIsOpen(false)}
                 className="p-2 rounded-full hover:bg-white/20 transition-colors"
-                >
+              >
                 <X className="w-5 h-5 text-white" />
-                </button>
+              </button>
             </div>
           </div>
 
@@ -542,9 +618,8 @@ export const ChatbotFloating: React.FC<ChatbotFloatingProps> = ({ user }) => {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex gap-2 ${
-                  message.sender === 'user' ? 'justify-end' : 'justify-start'
-                }`}
+                className={`flex gap-2 ${message.sender === 'user' ? 'justify-end' : 'justify-start'
+                  }`}
               >
                 {message.sender === 'bot' && (
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -552,11 +627,10 @@ export const ChatbotFloating: React.FC<ChatbotFloatingProps> = ({ user }) => {
                   </div>
                 )}
                 <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2 ${
-                    message.sender === 'user'
-                      ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
-                      : 'bg-slate-700 text-slate-100'
-                  }`}
+                  className={`max-w-[75%] rounded-2xl px-4 py-2 ${message.sender === 'user'
+                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
+                    : 'bg-slate-700 text-slate-100'
+                    }`}
                 >
                   {message.sender === 'user' ? (
                     <p className="text-sm whitespace-pre-wrap">
@@ -592,18 +666,31 @@ export const ChatbotFloating: React.FC<ChatbotFloatingProps> = ({ user }) => {
           </div>
 
           <div className="p-4 border-t border-slate-700">
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <input
+                ref={inputRef}
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); } }}
                 placeholder="Ask about Constitution..."
                 className="flex-1 bg-slate-700 border border-slate-600 rounded-full px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
                 disabled={isLoading}
               />
               <button
+                onClick={handleVoiceInput}
+                type="button"
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform ${isListening
+                  ? "bg-red-500 animate-pulse"
+                  : "bg-slate-600 hover:scale-110"
+                  }`}
+                disabled={isLoading}
+              >
+                <Mic className="w-5 h-5 text-white" />
+              </button>
+              <button
                 onClick={handleSend}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); } }}
                 className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white flex items-center justify-center hover:scale-110 transition-transform disabled:opacity-50"
                 disabled={isLoading}
               >
