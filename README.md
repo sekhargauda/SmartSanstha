@@ -35,11 +35,11 @@ SmartSanstha is an advanced web application that leverages cutting-edge AI and m
 ## 🎯 Problem Statement <a id="problem-statement"></a>
 
 
-The Indian Constitution is one of the longest and most comprehensive constitutions in the world, with **465 articles** organized into **25 parts** and **12 schedules**. However, learning and understanding it presents several challenges:
+The Indian Constitution is one of the longest and most comprehensive constitutions in the world, with **466 articles (including amendments)** organized into **25 Parts** and **12 Schedules**. However, learning and understanding it presents several challenges:
 
 ### Challenges:
 1. **Complex Language**: Dense legal terminology makes constitutional text difficult to comprehend
-2. **Information Overload**: The sheer volume of 465 articles is overwhelming for learners
+2. **Information Overload**: The sheer volume of 466 articles is overwhelming for learners
 3. **Lack of Personalization**: One-size-fits-all learning approaches don't cater to individual learning speeds
 4. **Low Engagement**: Traditional text-based learning is monotonous and fails to retain attention
 5. **Accessibility Barriers**: Limited resources that simplify constitutional concepts for general citizens
@@ -64,7 +64,7 @@ SmartSanstha addresses these challenges through an innovative, AI-powered approa
 - **Facebook BART large-cnn Model** processes raw constitutional text
 - Automatically simplifies complex legal language into easy-to-understand explanations
 - Maintains accuracy while improving readability
-- Makes 465 articles accessible to all education levels
+- Makes all 466 articles accessible to all education levels
 
 #### 2. **Adaptive Learning System** 🎯
 - **Google Gemini Flash 2.5** powers dynamic quiz generation
@@ -93,7 +93,7 @@ SmartSanstha addresses these challenges through an innovative, AI-powered approa
 - Learn through realistic legal scenarios
 
 #### 6. **Comprehensive Article Database** 📚
-- All 495 articles organized by 22 parts
+- All 466 articles organized by 25 parts
 - AI-simplified explanations
 - Easy navigation and search functionality
 - Cross-referencing between related articles
@@ -124,7 +124,7 @@ SmartSanstha addresses these challenges through an innovative, AI-powered approa
 - **Quiz Master**: AI-generated adaptive quizzes for each constitutional part
 
 ### 📖 Learning Hub
-- AI-simplified article database (465 articles)
+- AI-simplified article database (466 articles including amendments)
 - Part-wise organization (25 constitutional parts)
 - Detailed explanations in simple language
 - Search and filter functionality
@@ -161,7 +161,7 @@ Output: Simplified, easy-to-understand explanations
 **Features**:
 - Trained on legal-to-simple text translation
 - Maintains constitutional accuracy while improving readability
-- Processes all 465 articles automatically
+- Processes all 466 articles automatically
 - Generates multiple complexity levels
 
 **Data Source**: [Constitution of India - Kaggle Dataset](https://www.kaggle.com/datasets/rushikeshdarge/constitution-of-india)
@@ -295,7 +295,7 @@ SmartSanstha uses **MongoDB** to store enriched constitutional data. Each articl
 {
   "_id": ObjectId,                    // MongoDB unique identifier
 
-  "Article": String,                  // Article number (0-395)
+  "Article": String,                  // Article number (0-466)
                                       // "0" = Preamble
   
   "Title": String,                    // Article title
@@ -341,12 +341,20 @@ SmartSanstha uses a **hybrid authentication system** that combines **Firebase Au
 
 ### 🔑 Authentication Flow
 
-#### 1. Firebase Authentication (Frontend)
-- Users sign up or log in using **Firebase Email/Password Authentication**.
-- Email verification is mandatory before allowing access.
-- After successful login, the frontend retrieves a **Firebase ID Token** using:
-  ```ts
-  user.getIdToken()
+1. Firebase Authentication (Frontend)
+   - Email/Password login
+   - Email verification required
+   - Firebase ID Token generated after login
+
+2. Backend Verification
+   - Firebase ID Token verified using Firebase Admin SDK
+   - User created in MongoDB if not existing
+
+3. JWT Session Management
+   - Short-lived Access Token
+   - Long-lived Refresh Token
+   - HTTP-only secure cookies
+   - Role-based authorization middleware (Admin/User)
 ---
 
 ## 🛠️ Tech Stack <a id="tech-stack"></a>
@@ -387,14 +395,15 @@ SMARTSANSTHA
 ├── backend                          
 │   ├── config
 │   │   ├── database.js
-│   │   ├── firebaseAdmin.js
-│   │   └── firebase-service-account.json
+│   │   └── firebaseAdmin.js
 │   │
 │   ├── controllers
 │   │   ├── adminController.js
 │   │   ├── authController.js
 │   │   ├── firebaseAuthController.js
-│   │   └── userController.js
+│   │   ├── progressController.js
+│   │   ├── userController.js
+│   │   └── userStatsController.js
 │   │
 │   ├── helpers
 │   │   └── partHelpers.js
@@ -405,7 +414,9 @@ SMARTSANSTHA
 │   │
 │   ├── models
 │   │   ├── Admin.js
-│   │   └── User.js
+│   │   ├── User.js
+│   │   ├── UserArticleProgress.js
+│   │   └── UserStats.js
 │   │
 │   ├── routes
 │   │   ├── adminRoutes.js
@@ -413,13 +424,17 @@ SMARTSANSTHA
 │   │   ├── authRoutes.js
 │   │   ├── chatbotRoutes.js
 │   │   ├── courtRoutes.js
+│   │   ├── progressRoutes.js
 │   │   ├── quizRoutes.js
-│   │   └── userRoutes.js
+│   │   ├── userRoutes.js
+│   │   └── userStatsRoutes.js
 │   │
 │   ├── utils
-│   │   └── categorize.js
+│   │   ├── categorize.js
+│   │   ├── scoreUtils.js
+│   │   └── statsHelper.js
 │   │
-│   ├── node_modules
+│   ├── node_modules/
 │   ├── .env
 │   ├── .gitignore
 │   ├── package.json
@@ -427,13 +442,13 @@ SMARTSANSTHA
 │   └── server.js
 │
 ├── frontend                       
-│   ├── node_modules
+│   ├── node_modules/
 │   │
 │   ├── public
 │   │   ├── puzzles
-│   │   │   ├── map-of-india
-│   │   │   ├── national-emblem
-│   │   │   └── preamble
+│   │   │   ├── map-of-india/
+│   │   │   ├── national-emblem/
+│   │   │   └── preamble/
 │   │   │   ├── map-of-india-full.jpg
 │   │   │   ├── national-emblem-full.jpg
 │   │   │   └── preamble-full.jpg
@@ -448,7 +463,8 @@ SMARTSANSTHA
 │   │   │   ├── bot_LOGO1.jpeg
 │   │   │   ├── chatbot_logo.png
 │   │   │   ├── chatbot_logo1.png
-│   │   │   └── chatbot_logo1 Background Removed.png
+│   │   │   ├── chatbot_logo1 Background Removed.png
+│   │   │   └── index.ts
 │   │   │
 │   │   ├── components
 │   │   │   ├── chatbot
@@ -464,15 +480,17 @@ SMARTSANSTHA
 │   │   │   │   ├── CourtSceneVanilla.tsx
 │   │   │   │   └── CourtSimulation.css
 │   │   │   ├── dashboard
-│   │   │   │   ├── AchievementBadges.tsx
+│   │   │   │   ├── AdminDashboard.tsx
+│   │   │   │   ├── Bookmarks.tsx
 │   │   │   │   ├── Dashboard.tsx
+│   │   │   │   ├── RecentReading.tsx
 │   │   │   │   ├── ScoreCard.tsx
 │   │   │   │   └── UserProgress.tsx
 │   │   │   ├── games
-│   │   │   │   ├── CivicCityBuilder
-│   │   │   │   ├── JigsawPuzzle
-│   │   │   │   ├── MemoryGame
-│   │   │   │   ├── RightsDutiesGame
+│   │   │   │   ├── CivicCityBuilder/
+│   │   │   │   ├── JigsawPuzzle/
+│   │   │   │   ├── MemoryGame/
+│   │   │   │   ├── RightsDutiesGame/
 │   │   │   │   ├── ExploreGames.tsx
 │   │   │   │   └── GameCard.tsx
 │   │   │   ├── home
@@ -486,6 +504,7 @@ SMARTSANSTHA
 │   │   │   │   └── WhyLearnSection.tsx
 │   │   │   ├── layout
 │   │   │   │   ├── Footer.tsx
+│   │   │   │   ├── LanguageSwitcher.tsx
 │   │   │   │   ├── Layout.tsx
 │   │   │   │   ├── Navbar.tsx
 │   │   │   │   └── SiteLayout.tsx
@@ -506,6 +525,7 @@ SMARTSANSTHA
 │   │   │
 │   │   ├── pages
 │   │   │   ├── AboutPage.tsx
+│   │   │   ├── AdminLoginPage.tsx
 │   │   │   ├── ArticlePage.tsx
 │   │   │   ├── AuthPage.tsx
 │   │   │   ├── ContactPage.tsx
@@ -549,9 +569,10 @@ SMARTSANSTHA
 │   ├── tsconfig.node.json
 │   └── vite.config.ts
 │
-├── Constitution_db.Articles.json   # AI-simplified constitution dataset
+├── Original_dataset.json           # Raw Constitution of India dataset (original text)
 ├── .gitignore
 ├── package.json                    # Root scripts
+├── Prepared_dataset.json           # # AI-processed dataset with simplified explanations
 ├── README.md
 └── LICENSE
 ```
@@ -583,65 +604,57 @@ SMARTSANSTHA
    ```
 
 3. **Configure Backend Environment**
-   
-   Create a `.env` file in the `backend` directory:
 
-   ```bash
-   PORT=5001
-   NODE_ENV=development
+    Create a environment file inside the `backend` directory.
 
-   # Database
-   MONGODB_URI=your_mongodb_connection_string
+    ### backend/.env
 
-   # Gemini / AI
-   GEMINI_API_KEY=your_google_gemini_api_key
+      ```env
+      NODE_ENV=development
+      PORT=5001
 
-   # Firebase Admin
-   FIREBASE_PROJECT_ID=your_project_id
-   FIREBASE_CLIENT_EMAIL=your_firebase_admin_client_email
-   FIREBASE_PRIVATE_KEY="your_firebase_admin_private_key"
+      # Database
+      MONGODB_URI=mongodb://127.0.0.1:27017/smartsanstha
 
-   # JWT Configuration
-   JWT_ACCESS_SECRET=your_access_token_secret
-   JWT_REFRESH_SECRET=your_refresh_token_secret
-   ACCESS_TOKEN_EXPIRES=15m
-   REFRESH_TOKEN_EXPIRES=7d
-   ```
+      # JWT
+      JWT_ACCESS_SECRET=your_access_secret
+      JWT_REFRESH_SECRET=your_refresh_secret
+      ACCESS_TOKEN_EXPIRES=15m
+      REFRESH_TOKEN_EXPIRES=7d
 
-   
-   ### 🔧 Firebase service account setup
+      # Admin
+      ADMIN_MASTER_KEY=your_admin_master_key
 
-    To use Firebase Admin on the backend, you must add a service account JSON file:
+      # AI
+      GEMINI_API_KEY=your_google_gemini_api_key
 
-    1. Go to the **Firebase Console** → **Project settings** → **Service accounts**.  
-    2. Click **“Generate new private key”** under **Firebase Admin SDK** and confirm.  
-    3. A JSON file will be downloaded (for example:  
-      `<project-id>-firebase-adminsdk-xxxxxx.json`).  
-    4. Rename this file to **`firebase-service-account.json`**.  
-    5. Place it in the `backend/config` folder so the path becomes:
+      # Firebase Admin (JSON string format)
+      FIREBASE_SERVICE_ACCOUNT={"type":"service_account","project_id":"your_project_id","private_key_id":"...","private_key":"-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\\n","client_email":"firebase-adminsdk@your_project_id.iam.gserviceaccount.com"}
+      ```
 
-
-        ```bash
-        backend/config/firebase-service-account.json
-        ```
-
-    5. Make sure this file is **not committed** to Git (it should stay ignored in `.gitignore`). 
-
-
+    ---
 
 4. **Configure Frontend Environment**
 
-   Create a `.env` file in the `frontend` directory:
+    Create environment files inside the `frontend` directory.
 
-   ```bash
-   VITE_AUTH_API_BASE_URL=http://localhost:5001
+    ### frontend/.env
 
-   #Firebase client config
-   VITE_FIREBASE_API_KEY=your_api_key
-   VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-   VITE_FIREBASE_PROJECT_ID=your_project_id
-   ```
+    ```env
+    # API Base URL
+    VITE_API_BASE_URL=http://localhost:5001/api
 
+    # Email Verification Redirect
+    VITE_EMAIL_REDIRECT_URL=http://localhost:5173/email-verified
+
+    # Firebase Client Config
+    VITE_FIREBASE_API_KEY=your_api_key
+    VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+    VITE_FIREBASE_PROJECT_ID=your_project_id
+    VITE_FIREBASE_APP_ID=your_firebase_app_id
+    ```
+
+    ---
 
 
 5. **Start the app (backend + frontend)**
@@ -657,19 +670,6 @@ SMARTSANSTHA
 7. **Access the Application**
    
    Open your browser and navigate to `http://localhost:5173`
-
-### Build for Production
-
-```bash
-# Frontend build
-cd frontend
-npm run build
-# Output: frontend/dist
-
-# Backend (production mode)
-cd backend
-NODE_ENV=production npm start
-```
 
 ---
 
@@ -881,7 +881,7 @@ Get all simplified articles.
       "lastSimplified": "2025-01-24T10:30:00Z"
     }
   ],
-  "total": 395,
+  "total": 466,
   "page": 1
 }
 ```
@@ -922,16 +922,16 @@ Get specific article with AI-simplified explanation.
 - [x] Responsive UI/UX
 
 ### Phase 2: AI Enhancements 🚧 (In Progress)
-- [ ] User authentication and profiles
-- [ ] Personalized learning recommendations
+- [x] User authentication and profiles
+- [x] Personalized learning recommendations
 - [ ] Voice-based chatbot interaction
-- [ ] Advanced quiz analytics dashboard
-- [ ] Progress tracking and achievement system
+- [x] Advanced quiz analytics dashboard
+- [x] Progress tracking and achievement system
 
 ### Phase 3: Advanced Features 🔮 (Planned)
-- [ ] Multi-language support (Hindi, regional languages)
+- [x] Multi-language support (Hindi, regional languages)
 - [ ] Social learning features (discussion forums)
-- [ ] Mobile app (React Native)
+- [x] Mobile app (React Native)
 - [ ] Video lessons with AI-generated subtitles
 - [ ] Community-contributed content
 
