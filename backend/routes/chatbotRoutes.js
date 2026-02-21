@@ -1,109 +1,169 @@
 import express from 'express';
+import { getArticlesCollection, getScenariosCollection } from '../config/database.js';
 import { GoogleGenAI } from '@google/genai';
 import 'dotenv/config';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
 
-// -----------------------------------------------------------------
-// 1. CHAT API INITIALIZATION & STATE MANAGEMENT
-// -----------------------------------------------------------------
+// <-------------- AI INITIALIZATION -------------->
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY; 
-const modelName = 'gemini-2.5-flash';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+const MODELS = [
+  'gemini-2.5-flash',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro'
+];
 
 if (!GEMINI_API_KEY) {
   console.error("FATAL: GEMINI_API_KEY environment variable not set.");
 }
 
-const ai = new GoogleGenAI({ 
-    apiKey: GEMINI_API_KEY 
+const ai = new GoogleGenAI({
+  apiKey: GEMINI_API_KEY
 });
 
-// In-memory store for chat sessions. 
-// Key: sessionId (string) | Value: Chat object from the Gemini SDK
-const chatSessions = {}; 
+const chatSessions = {};
 
-// Define the System Instruction to set the model's persona
-const CONSTITUTION_SYSTEM_INSTRUCTION = 
-  "You are the 'Constitutional AI Assistant'. Your sole purpose is to answer questions, explain concepts, and provide information exclusively about the Indian Constitution. Be precise, refer to relevant Articles, Parts, or Schedules when possible, and maintain a professional and helpful tone. Do not answer questions outside the scope of the Indian Constitution or general Indian legal framework.";
+// <-------------- SYSTEM INSTRUCTION -------------->
 
-// -----------------------------------------------------------------
-// 2. CHAT ROUTE IMPLEMENTATION
-// -----------------------------------------------------------------
+const CONSTITUTION_SYSTEM_INSTRUCTION = `
+You are SmartSanstha's Constitutional AI Assistant.
+
+Your primary role:
+- Answer questions about the Indian Constitution.
+- Explain Articles, Parts, Schedules, and legal concepts.
+- You are also allowed to answer questions about the SmartSanstha platform
+  (such as number of articles, courtroom simulations, Learn page content, etc.).
+
+If the question is unrelated to the Constitution or SmartSanstha platform,
+politely decline.
+`;
+
+// <-------------- CHAT ROUTE -------------->
 
 router.post('/chat', async (req, res) => {
   const { prompt, sessionId } = req.body;
-  
+
   if (!prompt) {
-    return res.status(400).json({ success: false, error: 'Missing "prompt" in request body.' });
+    return res.status(400).json({
+      success: false,
+      error: 'Missing "prompt" in request body.'
+    });
   }
 
   if (!GEMINI_API_KEY) {
-     return res.status(503).json({ success: false, error: 'Service unavailable: Gemini API Key is missing.' });
-  }
-
-  let currentSessionId = sessionId;
-  let chat;
-
-  // 1. Check for existing session or create a new one
-  if (currentSessionId && chatSessions[currentSessionId]) {
-    // Session exists, use it
-    chat = chatSessions[currentSessionId];
-  } else {
-    // No session ID or session expired/not found, create a new session
-    currentSessionId = uuidv4();
-    console.log(`Creating new chat session: ${currentSessionId}`);
-
-    // Create a new chat session with the system instruction
-    chat = ai.chats.create({
-      model: modelName,
-      config: {
-        systemInstruction: CONSTITUTION_SYSTEM_INSTRUCTION
-      }
+    return res.status(503).json({
+      success: false,
+      error: 'Service unavailable: Gemini API Key is missing.'
     });
-    
-    // Store the new session
-    chatSessions[currentSessionId] = chat;
   }
-  
+
+  let extraContext = "";
+  const lowerPrompt = prompt.toLowerCase();
+
   try {
-    // 2. Send the new message to the chat session
-    const response = await chat.sendMessage({ 
-        message: prompt 
-    });
+    const articlesCollection = getArticlesCollection();
+    const scenariosCollection = getScenariosCollection();
 
-    // 3. Extract and Send Response
-    const modelResponseText = response.text;
+    // <-------------- PLATFORM DATA DETECTION -------------->
+
+    if (lowerPrompt.includes("article")) {
+      const articleCount = await articlesCollection.countDocuments();
+      extraContext += `Total constitutional articles available on SmartSanstha Learn page: ${articleCount}.\n`;
+    }
+
+    if (
+      lowerPrompt.includes("simulation") ||
+      lowerPrompt.includes("courtroom") ||
+      lowerPrompt.includes("scenario")
+    ) {
+      const scenarioCount = await scenariosCollection.countDocuments();
+      extraContext += `Total courtroom simulations available on SmartSanstha: ${scenarioCount}.\n`;
+    }
+
+    let currentSessionId = sessionId;
+    let responseText = null;
+    let lastError = null;
+
+    // <-------------- MODEL FALLBACK LOOP -------------->
+
+    for (const model of MODELS) {
+      try {
+        if (process.env.NODE_ENV === "development") {
+          console.log(`Trying model: ${model}`);
+        }
+
+        const chat = ai.chats.create({
+          model: model,
+          config: {
+            systemInstruction: CONSTITUTION_SYSTEM_INSTRUCTION
+          }
+        });
+
+        const finalMessage = extraContext
+          ? `Platform Data:\n${extraContext}\nUser Question: ${prompt}`
+          : prompt;
+
+        const response = await chat.sendMessage({
+          message: finalMessage
+        });
+
+        responseText = response.text;
+        if (process.env.NODE_ENV === "development") {
+          console.log(`Success with model: ${model}`);
+        }
+        break;
+
+      } catch (err) {
+        console.error(`Model ${model} failed:`, err.message);
+        lastError = err;
+      }
+    }
+
+    if (!responseText) {
+      throw lastError || new Error("All AI models failed.");
+    }
+
+    if (!currentSessionId) {
+      currentSessionId = uuidv4();
+    }
 
     res.status(200).json({
       success: true,
-      response: modelResponseText,
-      sessionId: currentSessionId, // Return the ID so the client can send it back next time
+      response: responseText,
+      sessionId: currentSessionId
     });
 
   } catch (error) {
     console.error('Gemini Chat API Request Failed:', error.message);
-    
-    // 4. Error Handling: Consider deleting a session if the API call fails
-    delete chatSessions[currentSessionId]; 
 
     res.status(500).json({
       success: false,
-      error: 'An internal error occurred while communicating with the AI model.',
-      details: error.message,
+      error: 'All AI models failed.',
+      details: error.message
     });
   }
 });
 
-// Optional: Add a route to explicitly clear the chat history (e.g., a "Start New Chat" button)
+// <-------------- CLEAR CHAT -------------->
+
 router.post('/clear-chat', (req, res) => {
-    const { sessionId } = req.body;
-    if (sessionId && chatSessions[sessionId]) {
-        delete chatSessions[sessionId];
-        return res.status(200).json({ success: true, message: `Chat session ${sessionId} cleared.` });
-    }
-    res.status(404).json({ success: false, message: 'No active chat session found to clear.' });
+  const { sessionId } = req.body;
+
+  if (sessionId && chatSessions[sessionId]) {
+    delete chatSessions[sessionId];
+    return res.status(200).json({
+      success: true,
+      message: `Chat session ${sessionId} cleared.`
+    });
+  }
+
+  res.status(404).json({
+    success: false,
+    message: 'No active chat session found to clear.'
+  });
 });
 
 export default router;
