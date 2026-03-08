@@ -704,10 +704,7 @@
 
 
 
-
-
-
-
+// frontend/src/pages/ArticlePage.tsx
 // frontend/src/pages/ArticlePage.tsx
 
 import React, { useState, useEffect } from "react";
@@ -722,7 +719,6 @@ import {
   ChevronRight,
   ChevronLeft,
   CheckCircle,
-  XCircle,
   Bookmark,
   ArrowLeft,
   Sparkles,
@@ -734,7 +730,9 @@ import {
   Pencil,
   Save,
   Plus,
-  Trash2
+  Trash2,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 import { Card } from "../components/common/Card";
 import { Button } from "../components/common/Button";
@@ -759,15 +757,13 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"simplified" | "original">("simplified");
   const [isBookmarked, setIsBookmarked] = useState(false);
-
-  // const [allArticles, setAllArticles] = useState<any[]>(articleData?.allArticles || []);
-  // const [currentIndex, setCurrentIndex] = useState(articleData?.currentIndex || 0);
-
   const [allArticles, setAllArticles] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Text-to-speech state
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
-  // --- EDITING STATE ---
+  // Editing state
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -797,24 +793,16 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
       if (response?.success) {
         setArticle(response.data);
 
-        // ✅ ADD THIS BLOCK HERE
         if (response.data?.part?.name) {
           const partName = response.data.part.name;
-
-          const partArticles: any =
-            await articleAPI.getArticlesByPart(partName);
+          const partArticles: any = await articleAPI.getArticlesByPart(partName);
 
           if (partArticles?.success) {
             setAllArticles(partArticles.data);
-
-            const normalize = (val: any) =>
-              String(val).replace("Article ", "").trim();
-
+            const normalize = (val: any) => String(val).replace("Article ", "").trim();
             const index = partArticles.data.findIndex(
               (a: any) => normalize(a.article) === normalize(artNum)
             );
-
-
             setCurrentIndex(index >= 0 ? index : 0);
           }
         }
@@ -831,8 +819,57 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
     }
   };
 
+  // Text-to-Speech Handler
+  const handleTTS = () => {
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
 
+    const element = document.getElementById("article-content");
+    if (!element) return;
 
+    const text = element.innerText;
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    // Detect language based on characters
+    if (/[\u0900-\u097F]/.test(text)) {
+      utterance.lang = "hi-IN";
+      utterance.rate = 0.9;
+    } else if (/[\u0A80-\u0AFF]/.test(text)) {
+      utterance.lang = "gu-IN";
+      utterance.rate = 0.9;
+    } else {
+      utterance.lang = "en-IN";
+      utterance.rate = 0.9;
+    }
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+    };
+
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+    };
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+    setIsSpeaking(true);
+  };
+
+  // Cleanup speech on component unmount or navigation
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  // Stop speech when navigating to another article
+  useEffect(() => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  }, [articleNumber]);
 
   useEffect(() => {
     if (!article) return;
@@ -842,7 +879,6 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
     const partName = article.part?.name || articleData?.partName;
     progressAPI.markArticleRead(num, partName).catch((e: any) => console.error("markArticleRead failed:", e));
   }, [article?.id]);
-
 
   useEffect(() => {
     const loadBookmarkState = async () => {
@@ -863,7 +899,7 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
     loadBookmarkState();
   }, [article, articleNumber]);
 
-  // --- ADMIN EDIT HANDLERS ---
+  // Admin edit handlers
   const handleEditClick = (section: string) => {
     setIsEditing(section);
     if (section === 'simplified') setEditData({ simplifiedDescription: article.simplifiedDescription });
@@ -881,7 +917,6 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
   const handleSaveEdit = async () => {
     try {
       setIsSaving(true);
-
       let rawNum = article.id || params.articleId;
 
       if (!rawNum) {
@@ -892,15 +927,10 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
         }
       }
 
-      console.log(`💾 Saving Article. Target ID: "${rawNum}"`);
-
       const response: any = await articleAPI.updateArticle(rawNum, editData);
 
       if (response?.success) {
-        setArticle((prev: any) => ({
-          ...prev,
-          ...editData
-        }));
+        setArticle((prev: any) => ({ ...prev, ...editData }));
         setIsEditing(null);
         setEditData({});
       } else {
@@ -919,9 +949,11 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
     newList[index] = value;
     setEditData({ ...editData, keyPoints: newList });
   };
+
   const handleAddListItem = () => {
     setEditData({ ...editData, keyPoints: [...editData.keyPoints, "New Point"] });
   };
+
   const handleRemoveListItem = (index: number) => {
     const newList = [...editData.keyPoints];
     newList.splice(index, 1);
@@ -933,31 +965,33 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
     newCases[index] = { ...newCases[index], [field]: value };
     setEditData({ ...editData, landmarkCases: newCases });
   };
+
   const handleAddCase = () => {
     setEditData({ ...editData, landmarkCases: [...editData.landmarkCases, { name: "New Case", significance: "Significance" }] });
   };
+
   const handleRemoveCase = (index: number) => {
     const newCases = [...editData.landmarkCases];
     newCases.splice(index, 1);
     setEditData({ ...editData, landmarkCases: newCases });
   };
 
-  // --- RELATED ARTICLES EDIT HANDLERS ---
   const handleRelatedChange = (index: number, field: 'number' | 'name', value: string) => {
     const newRelated = [...editData.relatedArticles];
     newRelated[index] = { ...newRelated[index], [field]: value };
     setEditData({ ...editData, relatedArticles: newRelated });
   };
+
   const handleAddRelated = () => {
     setEditData({ ...editData, relatedArticles: [...editData.relatedArticles, { number: "Article ", name: "" }] });
   };
+
   const handleRemoveRelated = (index: number) => {
     const newRelated = [...editData.relatedArticles];
     newRelated.splice(index, 1);
     setEditData({ ...editData, relatedArticles: newRelated });
   };
 
-  // --- NAVIGATION HANDLERS ---
   const handlePreviousArticle = () => {
     if (currentIndex > 0) {
       const prevArticle = allArticles[currentIndex - 1];
@@ -1031,7 +1065,6 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
     }
   };
 
-  // --- SHARE HANDLER ---
   const handleShare = async () => {
     try {
       const shareData = {
@@ -1050,7 +1083,6 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
       console.error("Share failed:", error);
     }
   };
-
 
   const handleRelatedArticleClick = async (related: any) => {
     let artNum = related.number;
@@ -1141,19 +1173,17 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
       <div className="grid grid-cols-2 gap-3 mb-6 w-fit">
         <button
           onClick={() => setActiveTab("simplified")}
-          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold transition-all text-sm sm:text-base min-w-[160px] ${activeTab === "simplified" ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg" : "bg-slate-800 text-slate-400 hover:bg-slate-700"
-            }`}
+          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold transition-all text-sm sm:text-base min-w-[160px] ${activeTab === "simplified" ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}
         >
           <Lightbulb className="w-5 h-5" />
-          Simplified Explanation
+          Simplified
         </button>
         <button
           onClick={() => setActiveTab("original")}
-          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold transition-all text-sm sm:text-base min-w-[160px]  ${activeTab === "original" ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg" : "bg-slate-800 text-slate-400 hover:bg-slate-700"
-            }`}
+          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold transition-all text-sm sm:text-base min-w-[160px] ${activeTab === "original" ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}
         >
           <FileText className="w-5 h-5" />
-          Original Text
+          Original
         </button>
       </div>
 
@@ -1171,9 +1201,20 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
           )}
 
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-              <Lightbulb className="w-5 h-5 text-white" />
-            </div>
+            <button
+              onClick={handleTTS}
+              className={`p-3 rounded-xl transition-all ${isSpeaking
+                  ? "bg-green-500 text-white animate-pulse"
+                  : "bg-purple-500 text-white hover:bg-purple-600"
+                }`}
+              title={isSpeaking ? "Stop reading" : "Listen to article"}
+            >
+              {isSpeaking ? (
+                <VolumeX className="w-5 h-5" />
+              ) : (
+                <Volume2 className="w-5 h-5" />
+              )}
+            </button>
             <h3 className="text-2xl font-bold text-white">Easy to Understand</h3>
           </div>
 
@@ -1192,13 +1233,11 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
               </div>
             </div>
           ) : (
-            <div className="prose prose-invert max-w-none text-slate-300 text-lg">
+            <div id="article-content" className="prose prose-invert max-w-none text-slate-300 text-lg leading-relaxed">
               <ReactMarkdown remarkPlugins={[remarkBreaks]}>
                 {article.simplifiedDescription}
               </ReactMarkdown>
             </div>
-
-
           )}
         </Card>
       ) : (
@@ -1488,19 +1527,10 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
             <button
               onClick={handlePreviousArticle}
               disabled={!hasPrevious}
-              className={`flex items-center justify-center gap-2 px-4 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold transition-all border-2 text-sm sm:text-base ${
-  hasPrevious
-    ? "border-orange-500 text-orange-400 hover:bg-orange-500/10"
-    : "border-slate-700 text-slate-600 cursor-not-allowed"
-}`}
-
-
-//                 className={`flex items-center justify-center gap-2 px-4 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold transition-all text-sm sm:text-base ${
-//   hasNext
-//     ? "bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-lg"
-//     : "bg-slate-700 text-slate-600 cursor-not-allowed"
-// }`}
-
+              className={`flex items-center justify-center gap-2 px-4 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold transition-all border-2 text-sm sm:text-base ${hasPrevious
+                  ? "border-orange-500 text-orange-400 hover:bg-orange-500/10"
+                  : "border-slate-700 text-slate-600 cursor-not-allowed"
+                }`}
             >
               <ChevronLeft className="w-5 h-5" />
               <span>Previous</span>
@@ -1512,12 +1542,10 @@ export const ArticlePage: React.FC<ArticlePageProps> = ({ user }) => {
             <button
               onClick={handleNextArticle}
               disabled={!hasNext}
-              className={`flex items-center justify-center gap-2 px-4 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold transition-all text-sm sm:text-base ${
-  hasNext
-    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-lg"
-    : "bg-slate-700 text-slate-600 cursor-not-allowed"
-}`}
-
+              className={`flex items-center justify-center gap-2 px-4 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold transition-all text-sm sm:text-base ${hasNext
+                  ? "bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-lg"
+                  : "bg-slate-700 text-slate-600 cursor-not-allowed"
+                }`}
             >
               <span>Next</span>
               <ChevronRight className="w-5 h-5" />
