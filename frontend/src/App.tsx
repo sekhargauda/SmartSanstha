@@ -435,7 +435,6 @@ function AppContent() {
   //   };
   //   checkUserSession();
   // }, [API_URL]);
-
   useEffect(() => {
     const controller = new AbortController();
 
@@ -443,24 +442,54 @@ function AppContent() {
       try {
         const response = await fetch(`${API_URL}/user/me`, {
           credentials: "include",
-          signal: controller.signal, // Connect the abort signal
+          signal: controller.signal,
         });
 
         if (response.ok) {
           const data = await response.json();
           setUser(data.profile);
-        } else {
-          setUser(null);
+          return;
         }
+
+        if (response.status === 401) {
+          const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
+            method: "POST",
+            credentials: "include",
+          });
+
+          if (refreshResponse.ok) {
+            // 🔁 Retry fetching user after refresh
+            const retryResponse = await fetch(`${API_URL}/user/me`, {
+              credentials: "include",
+            });
+
+            if (retryResponse.ok) {
+              const data = await retryResponse.json();
+              setUser(data.profile);
+              return;
+            }
+          }
+
+          // ❗ Only here we consider user logged out
+          setUser(null);
+          return;
+        }
+
+        // 🔴 Any other unexpected error
+        console.error("Unexpected error:", response.status);
+
       } catch (err: any) {
-        if (err.name === 'AbortError') return;
-        console.debug("Guest session active");
+        if (err.name === "AbortError") return;
+
+        // 🔴 Only real network errors
+        console.error("Network error:", err);
       } finally {
         setIsLoading(false);
       }
     };
 
     checkUserSession();
+
     return () => controller.abort();
   }, [API_URL]);
 
