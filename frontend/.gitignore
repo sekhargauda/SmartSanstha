@@ -24,6 +24,8 @@ dist-ssr
 *.sw?
 
 .env
-.env.prod
+.env.production
 node_modules
 /src/assets/images
+
+firebase hosting:disable --project smart-sanstha --site https://smart-sanstha.web.app/
