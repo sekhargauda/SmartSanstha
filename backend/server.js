@@ -38,14 +38,16 @@ const PORT = process.env.PORT || 5001;
 console.log("⚙️ Setting up middleware...");
 
 const allowedOrigins = [
-  "http://localhost:5173",
   "https://smartsanstha-7hqc.onrender.com",
+  "https://smart-sanstha.onrender.com",
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
+      if (!origin || origin.startsWith("http://localhost")) {
+        return callback(null, true);
+      }
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
