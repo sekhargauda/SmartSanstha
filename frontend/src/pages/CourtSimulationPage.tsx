@@ -567,6 +567,24 @@ export const CourtSimulationPage: React.FC = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const sceneRef = useRef<any>(null);
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  const minimizeScreen = () => {
+    document.exitFullscreen();
+    setIsFullscreen(false);
+  };
+
 
   // Text-to-Speech State
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -591,9 +609,9 @@ export const CourtSimulationPage: React.FC = () => {
   };
 
   const stopSpeech = () => {
-  window.speechSynthesis.cancel();
-  setIsSpeaking(false);
-};
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  };
 
   useEffect(() => {
     if (gameState === "roleplay" && selectedScenario) {
@@ -755,7 +773,33 @@ export const CourtSimulationPage: React.FC = () => {
       </div>
 
       {/* 3D Scene Container - Takes majority of space */}
-      <div className="flex-1 relative overflow-hidden min-h-0">
+      <div
+        ref={containerRef}
+        className="flex-1 relative overflow-hidden min-h-0"
+      >
+        {/* Fullscreen / Minimize Controls */}
+        <div className="absolute top-3 right-3 z-20 flex gap-2">
+          <button
+            onClick={toggleFullscreen}
+            className="p-2 bg-slate-800/80 border border-slate-600 rounded-lg hover:bg-slate-700"
+          >
+            {isFullscreen ? (
+              <Monitor className="w-4 h-4 text-red-400" />
+            ) : (
+              <Monitor className="w-4 h-4 text-green-400" />
+            )}
+          </button>
+
+          {isFullscreen && (
+            <button
+              onClick={minimizeScreen}
+              className="p-2 bg-slate-800/80 border border-slate-600 rounded-lg hover:bg-slate-700"
+            >
+              <XCircle className="w-4 h-4 text-yellow-400" />
+            </button>
+          )}
+        </div>
+
         <CourtScene
           ref={sceneRef}
           currentSpeaker={
@@ -863,7 +907,7 @@ export const CourtSimulationPage: React.FC = () => {
 
         {/* INSIDE SCENE: Dialog Bubble */}
         {gameState === "roleplay" && selectedScenario && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-11/12 max-w-4xl z-10">
+          <div className="absolute bottom-28 left-1/2 -translate-x-1/2 w-11/12 max-w-4xl z-10">
             <div className="bg-slate-800/95 backdrop-blur-md border border-orange-500/30 rounded-xl shadow-2xl p-4">
               <div className="flex items-start gap-3">
                 <div
@@ -1016,82 +1060,83 @@ export const CourtSimulationPage: React.FC = () => {
             </div>
           </div>
         )}
+        {gameState === "roleplay" && selectedScenario && (
+          <div className="absolute bottom-0 left-0 w-full z-30 bg-slate-800/90 backdrop-blur-md border-t border-slate-700">
+            <div className="max-w-7xl mx-auto px-4 py-2.5">
+              {/* Case Info + Progress */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                    <Scale className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-xs">
+                      {selectedScenario.title}
+                    </h3>
+                    <p className="text-[9px] text-slate-400">
+                      {selectedScenario.article}
+                    </p>
+                  </div>
+                </div>
+                <div className="px-2 py-1 bg-slate-700 rounded-md text-slate-300 text-[10px] font-semibold">
+                  {currentDialogueIndex + 1} / {selectedScenario.roleplay.length}
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="mb-2.5">
+                <div className="w-full bg-slate-700 rounded-full h-1">
+                  <div
+                    className="bg-gradient-to-r from-orange-500 to-red-500 h-1 rounded-full transition-all duration-300"
+                    style={{
+                      width: `${((currentDialogueIndex + 1) /
+                        selectedScenario.roleplay.length) *
+                        100
+                        }%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Navigation Buttons - Centered and Compact */}
+              <div className="flex items-center justify-center gap-2 max-w-2xl mx-auto">
+                <button
+                  onClick={previousDialogue}
+                  disabled={currentDialogueIndex === 0}
+                  className={`flex items-center gap-1 px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${currentDialogueIndex === 0
+                    ? "bg-slate-700 text-slate-500 cursor-not-allowed"
+                    : "bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white"
+                    }`}
+                >
+                  <ChevronLeft className="w-3 h-3" />
+                  Back
+                </button>
+
+                {currentDialogueIndex === selectedScenario.roleplay.length - 1 ? (
+                  <button
+                    onClick={goToVerdict}
+                    className="flex items-center justify-center gap-1 px-6 py-1.5 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg text-white text-[11px] font-semibold hover:from-orange-600 hover:to-red-600 transition-all"
+                  >
+                    <Gavel className="w-3 h-3" />
+                    Deliver Verdict
+                  </button>
+                ) : (
+                  <button
+                    onClick={nextDialogue}
+                    className="flex items-center justify-center gap-1 px-6 py-1.5 bg-orange-500 rounded-lg text-white text-[11px] font-semibold hover:bg-orange-600 transition-all"
+                  >
+                    Next
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* OUTSIDE SCENE: Controls Only (Case Info + Navigation) */}
-      {gameState === "roleplay" && selectedScenario && (
-        <div className="bg-slate-800/95 backdrop-blur-sm border-t border-slate-700 shadow-xl">
-          <div className="max-w-7xl mx-auto px-4 py-2.5">
-            {/* Case Info + Progress */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                  <Scale className="w-3.5 h-3.5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-xs">
-                    {selectedScenario.title}
-                  </h3>
-                  <p className="text-[9px] text-slate-400">
-                    {selectedScenario.article}
-                  </p>
-                </div>
-              </div>
-              <div className="px-2 py-1 bg-slate-700 rounded-md text-slate-300 text-[10px] font-semibold">
-                {currentDialogueIndex + 1} / {selectedScenario.roleplay.length}
-              </div>
-            </div>
 
-            {/* Progress Bar */}
-            <div className="mb-2.5">
-              <div className="w-full bg-slate-700 rounded-full h-1">
-                <div
-                  className="bg-gradient-to-r from-orange-500 to-red-500 h-1 rounded-full transition-all duration-300"
-                  style={{
-                    width: `${((currentDialogueIndex + 1) /
-                      selectedScenario.roleplay.length) *
-                      100
-                      }%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Navigation Buttons - Centered and Compact */}
-            <div className="flex items-center justify-center gap-2 max-w-2xl mx-auto">
-              <button
-                onClick={previousDialogue}
-                disabled={currentDialogueIndex === 0}
-                className={`flex items-center gap-1 px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${currentDialogueIndex === 0
-                  ? "bg-slate-700 text-slate-500 cursor-not-allowed"
-                  : "bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white"
-                  }`}
-              >
-                <ChevronLeft className="w-3 h-3" />
-                Back
-              </button>
-
-              {currentDialogueIndex === selectedScenario.roleplay.length - 1 ? (
-                <button
-                  onClick={goToVerdict}
-                  className="flex items-center justify-center gap-1 px-6 py-1.5 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg text-white text-[11px] font-semibold hover:from-orange-600 hover:to-red-600 transition-all"
-                >
-                  <Gavel className="w-3 h-3" />
-                  Deliver Verdict
-                </button>
-              ) : (
-                <button
-                  onClick={nextDialogue}
-                  className="flex items-center justify-center gap-1 px-6 py-1.5 bg-orange-500 rounded-lg text-white text-[11px] font-semibold hover:bg-orange-600 transition-all"
-                >
-                  Next
-                  <ChevronRight className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

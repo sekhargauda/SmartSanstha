@@ -469,8 +469,6 @@ function AppContent() {
               return;
             }
           }
-
-          // ❗ Only here we consider user logged out
           setUser(null);
           return;
         }
