@@ -245,12 +245,21 @@ router.post("/answer", verifyAccessToken, async (req, res) => {
   // continue quiz
   let nextDifficulty;
   if (isCorrect) {
-    if (session.currentDifficulty === "easy") nextDifficulty = "medium";
-    else if (session.currentDifficulty === "medium") nextDifficulty = "hard";
-    else nextDifficulty = "hard";
-  } else {
-    nextDifficulty = "easy";
-  }
+  if (session.currentDifficulty === "easy") nextDifficulty = "medium";
+  else if (session.currentDifficulty === "medium") nextDifficulty = "hard";
+  else nextDifficulty = "hard"; // stay at max
+} else {
+  if (session.currentDifficulty === "hard") nextDifficulty = "medium";
+  else if (session.currentDifficulty === "medium") nextDifficulty = "easy";
+  else nextDifficulty = "easy"; // stay at min
+}
+  // if (isCorrect) {
+  //   if (session.currentDifficulty === "easy") nextDifficulty = "medium";
+  //   else if (session.currentDifficulty === "medium") nextDifficulty = "hard";
+  //   else nextDifficulty = "hard";
+  // } else {
+  //   nextDifficulty = "easy";
+  // }
 
   let nextQuestion = null;
   let pool = session.pool[nextDifficulty];
