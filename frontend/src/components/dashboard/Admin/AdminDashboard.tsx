@@ -709,7 +709,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ admin }) => {
           </div>
           <div className="mt-6 pt-4 border-t border-slate-700">
             <div className="flex justify-between text-sm">
-              <span className="text-slate-400">Total (7 days)</span>
+              <span className="text-slate-400">Total (30 days)</span>
               <span className="text-white font-semibold">
                 {stats.signupTrend.reduce((sum, day) => sum + day.count, 0)} signups
               </span>
