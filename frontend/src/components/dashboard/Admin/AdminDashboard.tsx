@@ -689,7 +689,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ admin }) => {
             <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
               <Calendar className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-xl font-bold text-white">Signup Trend (Last 7 Days)</h2>
+            <h2 className="text-xl font-bold text-white">Signup Trend (Last 30 Days)</h2>
           </div>
           <div className="space-y-3">
             {stats.signupTrend.map((day, index) => (
