@@ -4,8 +4,6 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
 
 import { connectDB } from "./config/database.js";
 import articleRoutes from "./routes/articleRoutes.js";
@@ -22,11 +20,7 @@ import userStatsRoutes from "./routes/userStatsRoutes.js";
 // =====================================================
 // Path resolution for ES Modules
 // =====================================================
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load environment variables
-dotenv.config({ path: path.resolve(__dirname, "./.env") });
+dotenv.config({ path: "./backend/.env" });
 console.log("📝 Environment loaded");
 
 const app = express();
@@ -67,10 +61,14 @@ console.log("✅ Middleware configured");
 // API ROUTES
 // =====================================================
 
-app.get("/api/test", (req, res) => {
+app.get("/api/health", async (req, res) => {
+  const dbState = connectDB ? "configured" : "unavailable";
   res.json({
     success: true,
-    message: "Backend is working!",
+    status: "healthy",
+    service: "smartsanstha-backend",
+    database: dbState,
+    uptime: process.uptime(),
     timestamp: new Date().toISOString(),
   });
 });
@@ -84,18 +82,6 @@ app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/user-stats", userStatsRoutes);
-
-// =====================================================
-// SERVE FRONTEND (MUST BE AFTER API ROUTES)
-// =====================================================
-
-const frontendPath = path.join(__dirname, "dist");
-
-app.use(express.static(frontendPath));
-
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(frontendPath, "index.html"));
-});
 
 
 
