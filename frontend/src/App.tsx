@@ -1,4 +1,3 @@
-// // frontend/src/App.tsx
 
 // import React, { useState, useEffect } from 'react';
 // import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
@@ -80,44 +79,61 @@
 
 //   const API_URL = import.meta.env.VITE_AUTH_API_BASE_URL || 'http://localhost:5001';
 
-//   // Check user session on mount
-//   useEffect(() => {
-//     const checkUserSession = async () => {
-//       try {
-//         const response = await fetch(`${API_URL}/user/me`, {
-//           credentials: 'include',
-//         });
+//   // Restore the application session after a page refresh.
+  useEffect(() => {
+    const controller = new AbortController();
 
-//         if (response.ok) {
-//           const data = await response.json();
-//           setUser(data.profile);
-//         } else if (response.status === 401) {
-//           const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
-//             method: 'POST',
-//             credentials: 'include',
-//           });
+    const restoreSession = async () => {
+      try {
+        const response = await fetch(`${API_URL}/user/me`, {
+          credentials: "include",
+          signal: controller.signal,
+        });
 
-//           if (refreshResponse.ok) {
-//             const retryResponse = await fetch(`${API_URL}/user/me`, {
-//               credentials: 'include',
-//             });
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.profile);
+          return;
+        }
 
-//             if (retryResponse.ok) {
-//               const data = await retryResponse.json();
-//               setUser(data.profile);
-//             }
-//           }
-//         }
-//       } catch (error) {
-//         console.error('Session check failed:', error);
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-//     checkUserSession();
-//   }, [API_URL]);
+        if (response.status === 401) {
+          const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
+            method: "POST",
+            credentials: "include",
+          });
 
-//   const handleLoginSuccess = (userData: UserData) => {
+          if (refreshResponse.ok) {
+            const retryResponse = await fetch(`${API_URL}/user/me`, {
+              credentials: "include",
+            });
+
+            if (retryResponse.ok) {
+              const data = await retryResponse.json();
+              setUser(data.profile);
+              return;
+            }
+          }
+
+          setUser(null);
+          return;
+        }
+
+        console.error("Session restore failed:", response.status);
+      } catch (error: any) {
+        if (error.name !== "AbortError") {
+          console.error("Session restore error:", error);
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    };
+
+    restoreSession();
+
+    return () => controller.abort();
+  }, [API_URL]);
+
+  const handleLoginSuccess = (userData: UserData) => {
 //     setUser(userData);
 //     navigate('/');
 //   };
