@@ -39,7 +39,7 @@ console.log("⚙️ Setting up middleware...");
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://smartsanstha-7hqc.onrender.com",
+  "https://smartsansthaindia.onrender.com",
 ];
 
 app.use(
