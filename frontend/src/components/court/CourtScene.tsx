@@ -64,12 +64,18 @@ const normalizePosition = (position: string): CourtPosition => {
     : "home";
 };
 
+let cachedModelBuffer: ArrayBuffer | null = null;
+let cachedCourtroomModel: THREE.Object3D | null = null;
+
 async function getCachedModel(): Promise<ArrayBuffer> {
+  if (cachedModelBuffer) return cachedModelBuffer;
+
   const cache = await caches.open(CACHE_NAME);
   const cachedResponse = await cache.match(MODEL_URL);
 
   if (cachedResponse) {
-    return cachedResponse.arrayBuffer();
+    cachedModelBuffer = await cachedResponse.arrayBuffer();
+    return cachedModelBuffer;
   }
 
   const response = await fetch(MODEL_URL);
@@ -82,7 +88,8 @@ async function getCachedModel(): Promise<ArrayBuffer> {
 
   await cache.put(MODEL_URL, response.clone());
 
-  return response.arrayBuffer();
+  cachedModelBuffer = await response.arrayBuffer();
+  return cachedModelBuffer;
 }
 
 function disposeMaterial(material: THREE.Material) {
@@ -257,6 +264,7 @@ export const CourtScene = forwardRef<CourtSceneHandle, CourtSceneProps>(
         alpha: false,
         powerPreference: "high-performance",
       });
+
       renderer.setSize(width, height);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.shadowMap.enabled = true;
@@ -264,6 +272,7 @@ export const CourtScene = forwardRef<CourtSceneHandle, CourtSceneProps>(
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.8;
       container.appendChild(renderer.domElement);
+
 
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.target.copy(CAMERA_TARGET);
@@ -280,41 +289,56 @@ export const CourtScene = forwardRef<CourtSceneHandle, CourtSceneProps>(
       const loader = new GLTFLoader();
       loader.setMeshoptDecoder(MeshoptDecoder);
 
-      getCachedModel()
-        .then((arrayBuffer) => {
-          if (disposed) return;
+      getCachedModel().then((arrayBuffer) => {
 
-          loader.parse(
-            arrayBuffer,
-            "",
-            (gltf) => {
-              if (disposed) {
-                disposeObject3D(gltf.scene);
-                return;
-              }
+        if (disposed) return;
 
-              const courtroom = gltf.scene;
+        if (cachedCourtroomModel) {
+          const courtroom = cachedCourtroomModel.clone(true);
 
-              prepareCourtroomModel(courtroom);
+          prepareCourtroomModel(courtroom);
 
-              courtroomRef.current = courtroom;
+          courtroomRef.current = courtroom;
 
-              scene.add(courtroom);
+          scene.add(courtroom);
 
-              console.log("Courtroom GLB added to scene");
-            },
-            (error) => {
-              if (!disposed) {
-                console.error("Failed to parse courtroom.glb:", error);
-              }
-            },
-          );
-        })
-        .catch((error) => {
-          if (!disposed) {
-            console.error("Failed to load courtroom.glb:", error);
-          }
-        });
+          console.log("Courtroom loaded from memory cache");
+
+          return;
+        }
+
+
+        loader.parse(
+          arrayBuffer,
+          "",
+          (gltf) => {
+
+            if (disposed) {
+              disposeObject3D(gltf.scene);
+              return;
+            }
+
+            cachedCourtroomModel = gltf.scene;
+
+            const courtroom = gltf.scene.clone(true);
+
+            prepareCourtroomModel(courtroom);
+
+            courtroomRef.current = courtroom;
+
+            scene.add(courtroom);
+
+            console.log("Courtroom GLB parsed and cached");
+          },
+          (error) => {
+            if (!disposed) {
+              console.error("Failed to parse courtroom.glb:", error);
+            }
+          },
+        );
+      });
+
+      let firstRender = true;
 
       const animate = () => {
         if (disposed) return;
@@ -322,6 +346,12 @@ export const CourtScene = forwardRef<CourtSceneHandle, CourtSceneProps>(
         animationFrameId = requestAnimationFrame(animate);
 
         controls.update();
+
+        if (firstRender) {
+          renderer.render(scene, camera);
+          firstRender = false;
+          return;
+        }
 
         renderer.render(scene, camera);
       };
