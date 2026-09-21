@@ -63,8 +63,16 @@ export const deleteAccount = async (req, res) => {
     await User.findByIdAndDelete(userId);
 
     // Use same options as when setting cookies
-    res.clearCookie('accessToken', { path: '/' });
-    res.clearCookie('refreshToken', { path: '/' });
+    const isProduction =
+      process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+    };
+    res.clearCookie('accessToken', cookieOptions);
+    res.clearCookie('refreshToken', cookieOptions);
 
     return res.json({ message: 'Account deleted' });
   } catch (err) {
