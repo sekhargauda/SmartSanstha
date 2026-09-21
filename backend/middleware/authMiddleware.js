@@ -88,7 +88,6 @@ export const verifyAccessToken = async (req, res, next) => {
     const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
     // Payload contains { id, type } where type is 'admin' or 'user'
     
-    console.log('🔑 JWT Payload:', payload); // Debug log
 
     // Fetch full user/admin profile
     if (payload.type === 'user') {
@@ -105,7 +104,6 @@ export const verifyAccessToken = async (req, res, next) => {
       };
       req.profile = req.user;
       
-      console.log('👤 User authenticated:', req.user.name, 'Type:', req.user.type);
       
     } else if (payload.type === 'admin') {
       const adminProfile = await Admin.findById(payload.id).select('-password');
@@ -121,7 +119,6 @@ export const verifyAccessToken = async (req, res, next) => {
       };
       req.profile = req.user;
       
-      console.log('🛡️  Admin authenticated:', req.user.name, 'Type:', req.user.type);
       
     } else {
       return res.status(401).json({ message: 'Invalid token type' });
@@ -129,7 +126,7 @@ export const verifyAccessToken = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.error('❌ Auth middleware error:', err);
+    console.error("Auth middleware error:", err.message);
     return res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
