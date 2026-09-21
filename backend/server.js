@@ -4,6 +4,8 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
 import { connectDB } from "./config/database.js";
 import articleRoutes from "./routes/articleRoutes.js";
@@ -20,7 +22,11 @@ import userStatsRoutes from "./routes/userStatsRoutes.js";
 // =====================================================
 // Path resolution for ES Modules
 // =====================================================
-dotenv.config({ path: "./backend/.env" });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables
+dotenv.config({ path: path.resolve(__dirname, "./.env") });
 console.log("📝 Environment loaded");
 
 const app = express();
@@ -58,11 +64,11 @@ app.use(cookieParser());
 console.log("✅ Middleware configured");
 
 // =====================================================
-// API ROUTES
+// HEALTH CHECK
 // =====================================================
-
-app.get("/api/health", async (req, res) => {
+app.get("/api/health", (req, res) => {
   const dbState = connectDB ? "configured" : "unavailable";
+
   res.json({
     success: true,
     status: "healthy",
@@ -73,6 +79,9 @@ app.get("/api/health", async (req, res) => {
   });
 });
 
+// =====================================================
+// API ROUTES
+// =====================================================
 app.use("/api/articles", articleRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/quiz", verifyAccessToken, quizRoutes);
@@ -83,14 +92,36 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/user-stats", userStatsRoutes);
 
+// =====================================================
+// API 404 HANDLER
+// =====================================================
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "API endpoint not found",
+    path: req.originalUrl,
+  });
+});
 
+// =====================================================
+// GLOBAL ERROR HANDLER
+// =====================================================
+app.use((err, req, res, next) => {
+  console.error("❌ Server error:", err.message);
 
+  if (res.headersSent) {
+    return next(err);
+  }
 
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal server error",
+  });
+});
 
 // =====================================================
 // START SERVER
 // =====================================================
-
 console.log("🚀 Starting server...");
 
 connectDB()
@@ -100,6 +131,7 @@ connectDB()
       console.log("✅ Server is RUNNING!");
       console.log(`🌐 Local: http://localhost:${PORT}`);
       console.log(`📍 API Base: http://localhost:${PORT}/api`);
+      console.log(`❤️ Health: http://localhost:${PORT}/api/health`);
       console.log("=".repeat(50));
     });
   })

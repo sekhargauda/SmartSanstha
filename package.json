@@ -22,9 +22,12 @@
   "homepage": "https://github.com/sekhargauda/SmartSanstha#readme",
   "dependencies": {
     "concurrently": "^9.2.1"
+<<<<<<< HEAD
   },
   "devDependencies": {
     "@gltf-transform/cli": "^4.5.0",
     "baseline-browser-mapping": "^2.9.15"
+=======
+>>>>>>> 1738c7a (apis)
   }
 }
