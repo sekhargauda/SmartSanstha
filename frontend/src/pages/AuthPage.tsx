@@ -665,63 +665,48 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    setIsLoading(true);
+  const handleLogin = async (email: string, password: string) => {
+  try {
+    // 1. Sign in with Firebase
+    const credential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
 
-    try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+    // 2. Get Firebase ID token
+    const idToken = await credential.user.getIdToken();
 
-      const user = userCredential.user;
-
-      if (!user.emailVerified) {
-        setError("Please verify your email before logging in. Check your inbox for the verification link.");
-        await auth.signOut();
-        setIsLoading(false);
-        return;
-      }
-
-      const token = await user.getIdToken();
-
-      const response = await fetch(`${API_URL}/auth/firebase`, {
+    // 3. Exchange Firebase token for backend JWT cookies
+    const response = await fetch(
+      `${API_URL}/auth/firebase`,
+      {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
         },
         credentials: "include",
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Backend authentication failed");
+        body: JSON.stringify({
+          dob: "2000-01-01", // Use the user's actual DOB if required
+        }),
       }
+    );
 
-      onLoginSuccess({
-        id: data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        category: data.user.category,
-      });
-
-    } catch (err: any) {
-      if (err.code && err.code.startsWith('auth/')) {
-        const errorMessage = getFirebaseErrorMessage(err as AuthError);
-        setError(errorMessage);
-      } else {
-        setError(err.message || "Login failed. Please try again.");
-      }
-    } finally {
-      setIsLoading(false);
+    if (!response.ok) {
+      throw new Error("Backend authentication failed");
     }
-  };
+
+    const data = await response.json();
+
+    // 4. Only update login state after backend authentication succeeds
+    onLoginSuccess(data.user);
+
+  } catch (error) {
+    console.error("Login failed:", error);
+    throw error;
+  }
+};
 
   const PasswordToggle = () => (
     <button
