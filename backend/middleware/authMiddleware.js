@@ -74,6 +74,66 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+export const verifyAccessToken = async (req, res, next) => {
+  try {
+    // Access token from httpOnly cookie or Authorization header
+    const token =
+      req.cookies?.accessToken ||
+      (req.headers.authorization && req.headers.authorization.split(' ')[1]);
+
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    // Payload contains { id, type } where type is 'admin' or 'user'
+    
+
+    // Fetch full user/admin profile
+    if (payload.type === 'user') {
+      const userProfile = await User.findById(payload.id).select('-password');
+      
+      if (!userProfile) {
+        return res.status(401).json({ message: 'Invalid token. User not found.' });
+      }
+      
+      // ✅ FIX: Convert mongoose document to plain object and add type from JWT
+      req.user = {
+        ...userProfile.toObject(),
+        type: 'user' // Preserve type from JWT payload
+      };
+      req.profile = req.user;
+      
+      
+    } else if (payload.type === 'admin') {
+      const adminProfile = await Admin.findById(payload.id).select('-password');
+      
+      if (!adminProfile) {
+        return res.status(401).json({ message: 'Invalid token. Admin not found.' });
+      }
+      
+      // ✅ FIX: Convert mongoose document to plain object and add type from JWT
+      req.user = {
+        ...adminProfile.toObject(),
+        type: 'admin' // Preserve type from JWT payload
+      };
+      req.profile = req.user;
+      
+      
+    } else {
+      return res.status(401).json({ message: 'Invalid token type' });
+    }
+
+    next();
+  } catch (err) {
+    console.error("Auth middleware error:", err.message);
+    return res.status(401).json({ message: 'Invalid or expired token' });
+  }
+};
+
+import admin from "../config/firebaseAdmin.js";
+import User from "../models/User.js";
+
 export const verifyFirebaseToken = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
