@@ -131,9 +131,6 @@ export const verifyAccessToken = async (req, res, next) => {
   }
 };
 
-import admin from "../config/firebaseAdmin.js";
-import User from "../models/User.js";
-
 export const verifyFirebaseToken = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
