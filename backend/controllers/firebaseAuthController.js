@@ -118,7 +118,7 @@ const isProduction =
 const cookieOptions = {
   httpOnly: true,
   secure: isProduction,
-  sameSite: isProduction ? "none" : "lax",
+  sameSite: "none",
   path: "/",
 };
 

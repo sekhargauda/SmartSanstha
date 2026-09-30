@@ -68,7 +68,7 @@ export const deleteAccount = async (req, res) => {
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      sameSite: 'none',
       path: '/',
     };
     res.clearCookie('accessToken', cookieOptions);
