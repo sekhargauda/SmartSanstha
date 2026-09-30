@@ -1,11 +1,12 @@
 {
   "name": "smartsanstha-backend",
   "version": "1.0.0",
-  "description": "AI-Powered Interactive Platform for Learning the Indian Constitution",
+  "description": "SmartSanstha Backend",
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
   "repository": {
     "type": "git",
