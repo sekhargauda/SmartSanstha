@@ -122,6 +122,9 @@ const cookieOptions = {
   path: "/",
 };
 
+console.log("isProduction:", isProduction);
+console.log("Cookie options:", cookieOptions);
+
 /**
  * Firebase Authentication Handler
  * Verifies Firebase ID token and creates/logs in user
