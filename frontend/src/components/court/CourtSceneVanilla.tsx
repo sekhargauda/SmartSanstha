@@ -1,8 +1,34 @@
 import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import gsap from 'gsap';
+
+const COURTROOM_MODEL_URL = '/models/courtroom.glb';
+
+// Keep the parsed GLTF in memory so remounts reuse the downloaded model.
+// A shared promise also prevents duplicate loads if multiple scenes mount together.
+let courtroomModelPromise: Promise<GLTF> | null = null;
+
+const loadCourtroomModel = (): Promise<GLTF> => {
+  if (!courtroomModelPromise) {
+    const loader = new GLTFLoader();
+    courtroomModelPromise = new Promise((resolve, reject) => {
+      loader.load(
+        COURTROOM_MODEL_URL,
+        resolve,
+        undefined,
+        (error) => {
+          // Allow a later attempt if the initial request fails.
+          courtroomModelPromise = null;
+          reject(error);
+        }
+      );
+    });
+  }
+
+  return courtroomModelPromise;
+};
 
 const cameraPositions: { [key: string]: { x: number; y: number; z: number; lookAt: THREE.Vector3 } } = {
   home: { x: 0.68, y: 1.11, z: 2.10, lookAt: new THREE.Vector3(0, 1, 0) },
@@ -27,10 +53,6 @@ export const CourtSceneVanilla = forwardRef((props, ref) => {
   useImperativeHandle(ref, () => ({
     goTo: (place: string) => {
       const target = cameraPositions[place] || cameraPositions.home;
-      if (!target) {
-        console.warn(`Camera position for "${place}" not found. Defaulting to home.`);
-        return;
-      }
 
       if (cameraRef.current) {
         gsap.to(cameraRef.current.position, {
@@ -38,46 +60,35 @@ export const CourtSceneVanilla = forwardRef((props, ref) => {
           y: target.y,
           z: target.z,
           duration: 1.5,
-          onUpdate: () => {
-            if (cameraRef.current) {
-              cameraRef.current.lookAt(target.lookAt);
-            }
-          }
+          onUpdate: () => cameraRef.current?.lookAt(target.lookAt)
         });
       }
     }
   }));
 
   useEffect(() => {
-    if (!containerRef.current) return;
-
     const container = containerRef.current;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    if (!container) return;
 
-    // Scene Setup
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x202020);
     sceneRef.current = scene;
 
-    // Camera
     const camera = new THREE.PerspectiveCamera(
       60,
-      width / height,
+      container.clientWidth / container.clientHeight,
       0.1,
       1000
     );
     camera.position.set(2.29, 0.92, 1.57);
     cameraRef.current = camera;
 
-    // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(width, height);
+    renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 1, 0);
     controls.enableDamping = true;
@@ -85,56 +96,58 @@ export const CourtSceneVanilla = forwardRef((props, ref) => {
     controls.update();
     controlsRef.current = controls;
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
-
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(5, 10, 7.5);
     scene.add(directionalLight);
 
-    // Load Courtroom Model
-    const loader = new GLTFLoader();
-    loader.load(
-      '/models/courtroom.glb',
-      (gltf) => {
-        scene.add(gltf.scene);
-        console.log('✅ Courtroom model loaded');
-      },
-      undefined,
-      (error) => {
-        console.error('❌ Error loading model:', error);
-      }
-    );
+    let disposed = false;
+    loadCourtroomModel()
+      .then((gltf) => {
+        if (disposed) return;
+        // Each scene gets its own Object3D hierarchy; geometry/material assets
+        // remain shared with the cached GLTF to avoid duplicating GPU resources.
+        scene.add(gltf.scene.clone(true));
+      })
+      .catch((error) => {
+        if (!disposed) console.error('Error loading courtroom model:', error);
+      });
 
-    // Animation Loop
+    let animationFrameId = 0;
     const animate = () => {
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
     };
     animate();
 
-    // Handle Resize
     const handleResize = () => {
-      if (!container || !camera || !renderer) return;
-      const newWidth = container.clientWidth;
-      const newHeight = container.clientHeight;
-      camera.aspect = newWidth / newHeight;
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      if (!width || !height) return;
+      camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      renderer.setSize(newWidth, newHeight);
+      renderer.setSize(width, height);
     };
 
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(container);
 
-    // Cleanup
     return () => {
+      disposed = true;
+      cancelAnimationFrame(animationFrameId);
       resizeObserver.disconnect();
-      if (container && renderer.domElement) {
+      controls.dispose();
+      gsap.killTweensOf(camera.position);
+      scene.clear();
+      if (renderer.domElement.parentElement === container) {
         container.removeChild(renderer.domElement);
       }
       renderer.dispose();
+      sceneRef.current = null;
+      cameraRef.current = null;
+      rendererRef.current = null;
+      controlsRef.current = null;
     };
   }, []);
 
