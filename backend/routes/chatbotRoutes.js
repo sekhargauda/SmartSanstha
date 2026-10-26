@@ -11,9 +11,9 @@ const router = express.Router();
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 const MODELS = [
-  'gemini-2.5-flash',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro'
+  'gemini-3.8-flash',
+  'gemini-3.6-flash',
+  'gemini-3-flash'
 ];
 
 if (!GEMINI_API_KEY) {
