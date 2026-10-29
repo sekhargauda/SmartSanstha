@@ -184,7 +184,7 @@ export const Footer: React.FC = () => {
     { label: 'Constitution of India', url: 'https://www.constitution.org/cons/india/const.html' },
     { label: 'Know India Programme', url: 'https://knowindia.india.gov.in/' },
     { label: 'Ministry of Law', url: 'https://lawmin.gov.in/' },
-    { label: 'Indian Parliament', url: 'https://www.sansad.in/' },
+    { label: 'Indian Parliament', url: 'https://sansad.in/ls' },
   ];
 
   const socialLinks = [
