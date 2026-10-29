@@ -190,7 +190,7 @@ export const Footer: React.FC = () => {
   const socialLinks = [
     { icon: Twitter, url: 'https://twitter.com', label: 'Twitter' },
     { icon: Linkedin, url: 'https://linkedin.com', label: 'LinkedIn' },
-    { icon: Github, url: 'https://github.com/harshgajera101', label: 'GitHub' },
+    { icon: Github, url: 'https://github.com', label: 'GitHub' },
   ];
 
   return (
